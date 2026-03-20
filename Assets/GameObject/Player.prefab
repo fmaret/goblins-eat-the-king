@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 1712485497030357961}
   - component: {fileID: 4567627050462571949}
   - component: {fileID: 7247763838222582579}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -107,7 +107,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 646927935402244903}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -124,7 +124,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!114 &2031465597038924327
 MonoBehaviour:
@@ -169,6 +169,8 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
+  maxHp: 100
+  healthBar: {fileID: 0}
 --- !u!114 &3222807183391753532
 MonoBehaviour:
   m_ObjectHideFlags: 0

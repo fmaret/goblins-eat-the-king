@@ -247,6 +247,7 @@ GameObject:
   - component: {fileID: 9221009200560646480}
   - component: {fileID: 8284213056248596401}
   - component: {fileID: 3612170707243751837}
+  - component: {fileID: 4474945954083848931}
   m_Layer: 5
   m_Name: PlayerInfoUI
   m_TagString: Untagged
@@ -359,6 +360,20 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &4474945954083848931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4891635560187364487}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a1660141504f4348bc7cda59d56ebdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInfo
+  nameLabel: {fileID: 1391767766179213110}
+  healthBar: {fileID: 8396796162500943956}
 --- !u!1 &6596234442071149553
 GameObject:
   m_ObjectHideFlags: 0
@@ -813,6 +828,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8577758804001466562, guid: 1a36ce26720cf47e588086cea9a6dfb0, type: 3}
   m_PrefabInstance: {fileID: 4057669654769592660}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8396796162500943956 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5532905867119626496, guid: 1a36ce26720cf47e588086cea9a6dfb0, type: 3}
+  m_PrefabInstance: {fileID: 4057669654769592660}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13306460e47d04efe85c5f80214d87bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1001 &7845031628222940341
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -10,17 +10,49 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float attackRange = 0.8f;
     [SerializeField] private LayerMask enemyLayer;
 
+    [Header("Vie")]
+    [SerializeField] private float maxHp = 100f;
+    [SerializeField] private StatBar healthBar;
+
     private Animator animator;
     private PlayerMovement playerMovement;
 
     private NetworkVariable<bool> netIsAttacking = new NetworkVariable<bool>(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<float> hp = new NetworkVariable<float>(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private NetworkVariable<bool> netIsDead = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     void Awake()
     {
         animator = GetComponent<Animator>();
         playerMovement = GetComponent<PlayerMovement>();
     }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsServer)
+            hp.Value = maxHp;
+
+        hp.OnValueChanged += OnHpChanged;
+        netIsDead.OnValueChanged += (oldV, newV) => { if (newV) animator?.SetTrigger("Die"); };
+        // register in GameUI header for all clients
+        if (GameUI.Instance != null)
+            GameUI.Instance.AddPlayerEntry(OwnerClientId, $"Player {OwnerClientId}");
+        else
+            StartCoroutine(RegisterWithUI());
+        UpdateHealthBar();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        hp.OnValueChanged -= OnHpChanged;
+        if (GameUI.Instance != null)
+            GameUI.Instance.RemovePlayerEntry(OwnerClientId);
+    }
+
+    public bool IsDead => netIsDead.Value;
 
     void Update()
     {
@@ -31,46 +63,94 @@ public class PlayerController : NetworkBehaviour
             StartCoroutine(AttackRoutine());
     }
 
+    // Appelé par EnemyController (côté serveur)
+    public void TakeDamage(float damage)
+    {
+        if (!IsServer) return;
+        hp.Value = Mathf.Max(0f, hp.Value - damage);
+        // play hit animation on clients
+        PlayHitClientRpc();
+        if (hp.Value <= 0f)
+        {
+            netIsDead.Value = true;
+            DieClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void DieClientRpc()
+    {
+        if (animator != null)
+            animator.SetTrigger("Die");
+    }
+
+    [ClientRpc]
+    private void PlayHitClientRpc()
+    {
+        if (animator != null)
+            animator.SetTrigger("Hit");
+    }
+
+    private void OnHpChanged(float oldHp, float newHp)
+    {
+        UpdateHealthBar();
+    }
+
+    private void UpdateHealthBar()
+    {
+        string text = $"HP : {Mathf.CeilToInt(hp.Value)}/{maxHp}";
+        if (GameUI.Instance != null)
+        {
+            if (IsOwner)
+                GameUI.Instance.SetPlayerHealth(hp.Value, maxHp, text);
+
+            GameUI.Instance.SetPlayerEntryHealth(OwnerClientId, hp.Value, maxHp, text);
+        }
+        else if (healthBar != null)
+        {
+            // local fallback for scenes without GameUI
+            if (IsOwner)
+                healthBar.Set(hp.Value, maxHp, text);
+        }
+    }
+
+    private IEnumerator RegisterWithUI()
+    {
+        float waited = 0f;
+        const float timeout = 5f;
+        while (GameUI.Instance == null && waited < timeout)
+        {
+            waited += Time.deltaTime;
+            yield return null;
+        }
+
+        if (GameUI.Instance != null)
+            GameUI.Instance.AddPlayerEntry(OwnerClientId, $"Player {OwnerClientId}");
+    }
+
     private IEnumerator AttackRoutine()
     {
         playerMovement.IsAttacking = true;
         netIsAttacking.Value = true;
 
-        // Attendre le milieu de l'animation (moment où l'épée "touche")
         yield return null;
-        float halfDuration = 0f;
         while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.5f)
-        {
-            halfDuration += Time.deltaTime;
             yield return null;
-        }
 
-        // Overlap au moment de l'impact, dans la direction du joueur
         Vector2 dir = new Vector2(
             animator.GetFloat("LastInputX"),
             animator.GetFloat("LastInputY")
         ).normalized;
 
-        // Diagnostic large : rayon 3f, tous les layers, pour vérifier qu'un collider existe
         int layerMask = enemyLayer == 0 ? ~0 : (int)enemyLayer;
-
-        // Cherche tous les ennemis dans le rayon d'attaque depuis la position du joueur,
-        // puis garde uniquement ceux qui sont dans la bonne direction
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attackRange, layerMask);
-
-        // Dessine le cercle de détection visible en Scene view ET Game view (pendant 1 seconde)
         DrawDebugCircle(transform.position, attackRange, Color.red, 1f);
-        // Dessine la direction d'attaque
         Debug.DrawRay(transform.position, dir * attackRange, Color.yellow, 1f);
 
-        Debug.Log($"[PlayerController] Ennemis dans le rayon: {hits.Length}, direction: {dir}");
         foreach (var hit in hits)
         {
-            // Vérifie que l'ennemi est globalement dans la direction visée (produit scalaire > 0)
             Vector2 toEnemy = ((Vector2)hit.transform.position - (Vector2)transform.position).normalized;
-            float dot = Vector2.Dot(dir, toEnemy);
-            Debug.Log($"[PlayerController] {hit.name} | dot={dot:F2}");
-            if (dot > 0.3f)
+            if (Vector2.Dot(dir, toEnemy) > 0.3f)
             {
                 var enemy = hit.GetComponent<EnemyController>();
                 if (enemy != null)
@@ -78,7 +158,6 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
-        // Attendre la fin de l'animation
         while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
             yield return null;
 
@@ -86,14 +165,12 @@ public class PlayerController : NetworkBehaviour
         netIsAttacking.Value = false;
     }
 
-    // Visualisation de la zone d'attaque dans l'éditeur
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 
-    // Dessine un cercle avec Debug.DrawLine (visible en Scene ET Game view)
     private void DrawDebugCircle(Vector2 center, float radius, Color color, float duration, int segments = 24)
     {
         float angleStep = 360f / segments;

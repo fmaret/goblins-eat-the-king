@@ -8,6 +8,7 @@ public class PlayerMovement : NetworkBehaviour
     public float sprintMultiplier = 2f;
     private Rigidbody2D rb;
     private Animator animator;
+    private PlayerController playerController;
 
     // Synchronisées sur le réseau — owner écrit, tous les clients lisent
     private NetworkVariable<Vector2> netMovement = new NetworkVariable<Vector2>(
@@ -22,6 +23,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        playerController = GetComponent<PlayerController>();
     }
 
     public override void OnNetworkSpawn()
@@ -33,12 +35,25 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (IsOwner)
         {
-            netMovement.Value = InputSystem.actions["Move"].ReadValue<Vector2>();
-            netIsSprinting.Value = InputSystem.actions["Sprint"].IsPressed();
+            // Ne pas lire l'input si le joueur est mort
+            if (playerController != null && playerController.IsDead)
+            {
+                netMovement.Value = Vector2.zero;
+                netIsSprinting.Value = false;
+            }
+            else
+            {
+                netMovement.Value = InputSystem.actions["Move"].ReadValue<Vector2>();
+                netIsSprinting.Value = InputSystem.actions["Sprint"].IsPressed();
+            }
         }
 
         Vector2 movement = netMovement.Value;
         bool isMoving = movement != Vector2.zero;
+
+        // si mort, forcer l'animation idle
+        if (playerController != null && playerController.IsDead)
+            isMoving = false;
 
         animator.SetBool("isMoving", isMoving);
         animator.SetBool("isSprinting", netIsSprinting.Value && isMoving);
