@@ -33,7 +33,11 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (IsServer)
+        {
             hp.Value = maxHp;
+            if (DungeonGenerator.Instance != null)
+                transform.position = DungeonGenerator.Instance.SpawnPosition;
+        }
 
         hp.OnValueChanged += OnHpChanged;
         netIsDead.OnValueChanged += (oldV, newV) => { if (newV) animator?.SetTrigger("Die"); };

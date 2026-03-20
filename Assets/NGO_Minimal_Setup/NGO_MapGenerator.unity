@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 7934393}
   - component: {fileID: 7934392}
   - component: {fileID: 7934395}
+  - component: {fileID: 7934396}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -256,6 +257,20 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &7934396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7934391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b1a50e93a5234783b4c7d07e6cbc9e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
+  offset: {x: 0, y: 0, z: -10}
+  smoothSpeed: 0.125
 --- !u!1 &37849314
 GameObject:
   m_ObjectHideFlags: 0
@@ -327,11 +342,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DungeonGenerator
   ShowTopMostFoldoutHeaderGroup: 1
-  gridWidth: 4
-  gridHeight: 4
-  roomSize: 10
+  gridWidth: 5
+  gridHeight: 5
+  roomSize: 30
   roomPrefab: {fileID: 4056034874441315933, guid: 99b611696e909984b8340da730359edf, type: 3}
   elementPrefabs: []
+  spawnCell: {x: 2, y: 5}
 --- !u!1 &193233382
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,11 +1,14 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public class DungeonGenerator : NetworkBehaviour
 {
+    public static DungeonGenerator Instance { get; private set; }
+
     [Header("Config")]
-    [SerializeField] private int gridWidth = 4;
-    [SerializeField] private int gridHeight = 4;
+    [SerializeField] private int gridWidth = 5;
+    [SerializeField] private int gridHeight = 5;
     [SerializeField] private float roomSize = 10f;
 
     [Header("Prefabs salles")]
@@ -13,6 +16,11 @@ public class DungeonGenerator : NetworkBehaviour
 
     [Header("Elements")]
     [SerializeField] private GameObject[] elementPrefabs; // piege, coffre, table
+
+    [Header("Spawn joueur")]
+    [SerializeField] private Vector2Int spawnCell = new Vector2Int(0, 2);
+
+    public Vector3 SpawnPosition => new Vector3(spawnCell.x * roomSize, -spawnCell.y * roomSize, 0);
 
     private RoomInfo bossRoom;
 
@@ -25,6 +33,14 @@ public class DungeonGenerator : NetworkBehaviour
 
     // Grille : true = salle présente
     private RoomInfo[,] grid;
+
+    // Référence aux RoomBuilders pour ouvrir les portes
+    private readonly Dictionary<(int, int), RoomBuilder> rooms = new();
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -99,6 +115,8 @@ public class DungeonGenerator : NetworkBehaviour
 
     private void BuildDungeon()
     {
+        rooms.Clear();
+
         for (int x = 0; x < gridWidth; x++)
         {
             for (int y = 0; y <= gridHeight; y++)
@@ -110,9 +128,27 @@ public class DungeonGenerator : NetworkBehaviour
                 Vector3 pos = new Vector3(x * roomSize, -y * roomSize, 0);
                 GameObject room = Instantiate(roomPrefab, pos, Quaternion.identity);
                 room.name = y == 0 ? "Room_Boss" : $"Room_{x}_{y}";
-                room.GetComponent<RoomBuilder>().Build(grid[x, y], elementPrefabs);
+
+                var builder = room.GetComponent<RoomBuilder>();
+                builder.Build(grid[x, y], elementPrefabs);
+                rooms[(x, y)] = builder;
             }
         }
+    }
+
+    // Appelé par DoorTrigger sur le client propriétaire
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void OpenDoorServerRpc(int x, int y, int direction)
+    {
+        OpenDoorClientRpc(x, y, direction);
+    }
+
+    // Synchronise l'ouverture de la porte sur tous les clients
+    [ClientRpc]
+    private void OpenDoorClientRpc(int x, int y, int direction)
+    {
+        if (rooms.TryGetValue((x, y), out var builder))
+            builder.OpenDoor(direction);
     }
 
     public override void OnNetworkDespawn()

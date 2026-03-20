@@ -25,6 +25,12 @@ public class RoomBuilder : MonoBehaviour
         SetWall(wallEast,  doorEast,  info.openEast);
         SetWall(wallWest,  doorWest,  info.openWest);
 
+        // Zones de déclenchement sur chaque porte ouverte
+        if (info.openNorth) SetupDoorTrigger(doorNorth, info.x, info.y, 0);
+        if (info.openSouth) SetupDoorTrigger(doorSouth, info.x, info.y, 1);
+        if (info.openEast)  SetupDoorTrigger(doorEast,  info.x, info.y, 2);
+        if (info.openWest)  SetupDoorTrigger(doorWest,  info.x, info.y, 3);
+
         // Couleur selon le type
         if (floor != null)
         {
@@ -56,5 +62,37 @@ public class RoomBuilder : MonoBehaviour
     {
         if (wall != null) wall.SetActive(!isOpen);
         if (door != null) door.SetActive(isOpen);
+    }
+
+    // Crée une zone trigger enfant sur la porte pour détecter le joueur
+    private void SetupDoorTrigger(GameObject door, int x, int y, int dir)
+    {
+        if (door == null) return;
+
+        var triggerGO = new GameObject("DoorTriggerZone");
+        triggerGO.transform.SetParent(door.transform, false);
+
+        var col = triggerGO.AddComponent<BoxCollider2D>();
+        col.isTrigger = true;
+        col.size = new Vector2(1f, 1f);
+
+        var dt = triggerGO.AddComponent<DoorTrigger>();
+        dt.roomX = x;
+        dt.roomY = y;
+        dt.direction = dir;
+    }
+
+    // Appelé par DungeonGenerator pour ouvrir une porte (0=N 1=S 2=E 3=W)
+    public void OpenDoor(int direction)
+    {
+        GameObject door = direction switch
+        {
+            0 => doorNorth,
+            1 => doorSouth,
+            2 => doorEast,
+            3 => doorWest,
+            _ => null
+        };
+        if (door != null) door.SetActive(false);
     }
 }
