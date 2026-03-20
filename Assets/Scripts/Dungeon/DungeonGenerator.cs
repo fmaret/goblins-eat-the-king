@@ -83,7 +83,10 @@ public class DungeonGenerator : NetworkBehaviour
                     x = x,
                     y = y,
                     type = RoomType.Normal,
-                    openNorth = y == 1 && x == bossX, // ouverture vers le boss
+                    // Nord : ouvert si salle voisine existe au nord
+                    // y==1 → voisine du nord = boss uniquement si même colonne
+                    // y>1  → voisine du nord = salle normale toujours présente
+                    openNorth = y > 1 || x == bossX,
                     openSouth = y < gridHeight,
                     openEast = x < gridWidth - 1,
                     openWest = x > 0
