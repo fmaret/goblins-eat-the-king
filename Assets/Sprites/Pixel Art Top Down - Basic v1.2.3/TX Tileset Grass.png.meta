@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 7b0493af0d6079e4d85ea14fff276e47
+guid: 4899e1203a9fbd34993d29cfb1bd87aa
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2572365745140355499
-    second: goblin_0
+      213: 70345852487738077
+    second: TX Tileset Grass_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: goblin_0
+      name: TX Tileset Grass_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 234
-        height: 214
+        width: 256
+        height: 256
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ba159772401e2b320800000000000000
-      internalID: 2572365745140355499
+      spriteID: dd224fc1e2be9f000800000000000000
+      internalID: 70345852487738077
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      goblin_0: 2572365745140355499
+      TX Tileset Grass_0: 70345852487738077
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

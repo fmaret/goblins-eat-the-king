@@ -1,10 +1,19 @@
 fileFormatVersion: 2
-guid: 7b0493af0d6079e4d85ea14fff276e47
+guid: 3634b59b7ddfed342b3f0bbb4e755316
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2572365745140355499
-    second: goblin_0
+      213: 1549508750607559342
+    second: TX Player_0
+  - first:
+      213: -6957052691073287718
+    second: TX Player_1
+  - first:
+      213: 2185052477942719528
+    second: TX Player_2
+  - first:
+      213: -1844808789431545801
+    second: TX Player_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +109,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: goblin_0
+      name: TX Player_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 234
-        height: 214
+        x: 5
+        y: 69
+        width: 23
+        height: 46
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +124,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ba159772401e2b320800000000000000
-      internalID: 2572365745140355499
+      spriteID: eaaa250cff5f08510800000000000000
+      internalID: 1549508750607559342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TX Player_1
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 69
+        width: 23
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad9b6e00075937f90800000000000000
+      internalID: -6957052691073287718
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TX Player_2
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 69
+        width: 23
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 824ec5bd6add25e10800000000000000
+      internalID: 2185052477942719528
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TX Player_3
+      rect:
+        serializedVersion: 2
+        x: 98
+        y: 67
+        width: 29
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7301a632e2ce566e0800000000000000
+      internalID: -1844808789431545801
       vertices: []
       indices: 
       edges: []
@@ -135,7 +210,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      goblin_0: 2572365745140355499
+      TX Player_0: 1549508750607559342
+      TX Player_1: -6957052691073287718
+      TX Player_2: 2185052477942719528
+      TX Player_3: -1844808789431545801
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
