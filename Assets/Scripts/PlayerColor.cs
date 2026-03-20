@@ -9,12 +9,17 @@ public class PlayerColor : NetworkBehaviour
         NetworkVariableWritePermission.Owner
     );
 
+    public Color basePlayerColor;
+
     public override void OnNetworkSpawn()
     {
         if (IsOwner)
         {
-            // Couleur aléatoire à la connexion
-            playerColor.Value = Random.ColorHSV(0f, 1f, 0.8f, 1f, 0.8f, 1f);
+            // Si aucune couleur assignée dans l'Inspector (alpha = 0), couleur random
+            bool hasBaseColor = basePlayerColor.a > 0f;
+            playerColor.Value = hasBaseColor
+                ? basePlayerColor
+                : Random.ColorHSV(0f, 1f, 0.8f, 1f, 0.8f, 1f);
         }
 
         // Applique la couleur immédiatement + écoute les changements

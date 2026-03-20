@@ -1,36 +1,62 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
     public float moveSpeed = 3f;
+    public float sprintMultiplier = 2f;
     private Rigidbody2D rb;
     private Animator animator;
-    private Vector2 movement;
 
-    void Start()
+    // Synchronisées sur le réseau — owner écrit, tous les clients lisent
+    private NetworkVariable<Vector2> netMovement = new NetworkVariable<Vector2>(
+        default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netIsSprinting = new NetworkVariable<bool>(
+        default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
+    // Accessible par PlayerController pour bloquer le mouvement pendant l'attaque
+    public bool IsAttacking { get; set; }
+
+    void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
     }
 
-    // ✅ Méthode compatible Unity Input System
-    public void OnMove(InputValue value)
+    public override void OnNetworkSpawn()
     {
-        movement = value.Get<Vector2>();
-        Debug.Log($"[OnMove] Input reçu : {movement}");
+        Debug.Log("PlayerMovement spawned for " + OwnerClientId);
     }
 
     void Update()
     {
-        animator.SetFloat("horizontal", movement.x);
-        animator.SetFloat("vertical", movement.y);
-        animator.SetBool("isMoving", movement != Vector2.zero);
-        Debug.Log($"[Animator] isMoving={movement != Vector2.zero}, h={movement.x}, v={movement.y}");
+        if (IsOwner)
+        {
+            netMovement.Value = InputSystem.actions["Move"].ReadValue<Vector2>();
+            netIsSprinting.Value = InputSystem.actions["Sprint"].IsPressed();
+        }
+
+        Vector2 movement = netMovement.Value;
+        bool isMoving = movement != Vector2.zero;
+
+        animator.SetBool("isMoving", isMoving);
+        animator.SetBool("isSprinting", netIsSprinting.Value && isMoving);
+
+        if (isMoving)
+        {
+            Vector2 dir = movement.normalized;
+            animator.SetFloat("InputX", dir.x);
+            animator.SetFloat("InputY", dir.y);
+            animator.SetFloat("LastInputX", dir.x);
+            animator.SetFloat("LastInputY", dir.y);
+        }
     }
 
     void FixedUpdate()
     {
-        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        if (!IsOwner || IsAttacking) return;
+        float currentSpeed = moveSpeed * (netIsSprinting.Value ? sprintMultiplier : 1f);
+        rb.MovePosition(rb.position + netMovement.Value * currentSpeed * Time.fixedDeltaTime);
     }
 }
