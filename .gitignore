@@ -16,4 +16,5 @@ UserSettings/
 *.booproj
 
 .DS_Store
-Thumbs.db
+Thumbs.db.vscode/ 
+*.slnx 
