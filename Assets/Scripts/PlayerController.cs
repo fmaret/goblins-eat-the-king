@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Goblins.Data;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
@@ -21,6 +22,13 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float maxHp = 100f;
     [SerializeField] private float maxMp = 50f;
     [SerializeField] private float maxEndurance = 100f;
+
+    [Header("Movement")]
+    [SerializeField] private float moveSpeed = 3f;
+    [SerializeField] private float sprintMultiplier = 2f;
+
+    public float MoveSpeed => moveSpeed;
+    public float SprintMultiplier => sprintMultiplier;
 
     [SerializeField] private StatBar healthBar;
 
@@ -94,6 +102,231 @@ public class PlayerController : NetworkBehaviour
         if (InputSystem.actions["UpgradeChoiceDebug"].WasPressedThisFrame()) {
             UpgradeChoice.Instance.GenerateNewChoices();
             UpgradeChoice.Instance.SetActive(true);
+        }
+        if (InputSystem.actions["ShowStats"].WasPressedThisFrame()) {
+            if (DisplayStats.Instance == null)
+            {
+                Debug.LogWarning("No DisplayStats instance available");
+                return;
+            }
+            if (DisplayStats.Instance.IsOpen)
+            {
+                DisplayStats.Instance.SetActive(false);
+            }
+            else
+            {
+                DisplayStats.Instance.DisplayPlayerStats(this);
+                DisplayStats.Instance.SetActive(true);
+            }
+        }
+    }
+
+    // Request from owning client to apply a powerup (runs on server)
+    [ServerRpc(RequireOwnership = true)]
+    public void RequestApplyPowerupServerRpc(int statInt, float value, int targetPlayerIndex, bool isUpgrade, ServerRpcParams rpcParams = default)
+    {
+        if (!IsServer) return;
+        ApplyPowerupToTargets(statInt, value, targetPlayerIndex, isUpgrade);
+    }
+
+    private void ApplyPowerupToTargets(int statInt, float value, int targetPlayerIndex, bool isUpgrade)
+    {
+        if (NetworkManager.Singleton == null) return;
+        var clients = NetworkManager.Singleton.ConnectedClientsList;
+        if (clients == null) return;
+
+        void ApplyToClient(Unity.Netcode.NetworkClient client)
+        {
+            if (client.PlayerObject == null) return;
+            var pc = client.PlayerObject.GetComponent<PlayerController>();
+            if (pc != null) pc.ApplyPowerup(statInt, value, isUpgrade);
+        }
+
+        if (targetPlayerIndex == 0)
+        {
+            foreach (var c in clients) ApplyToClient(c);
+        }
+        else
+        {
+            int idx = targetPlayerIndex - 1;
+            if (idx >= 0 && idx < clients.Count) ApplyToClient(clients[idx]);
+        }
+        // notify affected clients so their local PlayerController instances update for display
+        NotifyClientsOfPowerup(statInt, value, targetPlayerIndex, isUpgrade);
+    }
+
+    // notify the affected client(s) so their local PlayerController reflects the stat change for UI
+    // Called from server
+    private void NotifyClientsOfPowerup(int statInt, float value, int targetPlayerIndex, bool isUpgrade)
+    {
+        if (NetworkManager.Singleton == null) return;
+        var clients = NetworkManager.Singleton.ConnectedClientsList;
+        if (clients == null) return;
+
+        void NotifyClient(Unity.Netcode.NetworkClient client)
+        {
+            if (client.PlayerObject == null) return;
+            var pc = client.PlayerObject.GetComponent<PlayerController>();
+            if (pc == null) return;
+            var rpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { client.ClientId } }
+            };
+            pc.ApplyPowerupClientRpc(statInt, value, isUpgrade, rpcParams);
+        }
+
+        if (targetPlayerIndex == 0)
+        {
+            // notify all clients
+            foreach (var c in clients) NotifyClient(c);
+        }
+        else
+        {
+            int idx = targetPlayerIndex - 1;
+            if (idx >= 0 && idx < clients.Count) NotifyClient(clients[idx]);
+        }
+    }
+
+    // Apply a stat change on this player (server-only authoritative)
+    public void ApplyPowerup(int statInt, float value, bool isUpgrade)
+    {
+        var stat = (StatType)statInt;
+        float sign = isUpgrade ? 1f : -1f;
+        switch (stat)
+        {
+            case StatType.HP:
+                maxHp = Mathf.Max(1f, maxHp + sign * value);
+                if (IsServer) hp.Value = Mathf.Min(hp.Value, maxHp);
+                UpdateHealthBar();
+                break;
+            case StatType.MP:
+                maxMp = Mathf.Max(0f, maxMp + sign * value);
+                if (IsServer) mp.Value = Mathf.Min(mp.Value, maxMp);
+                UpdateManaBar();
+                break;
+            case StatType.ENDURANCE:
+                maxEndurance = Mathf.Max(0f, maxEndurance + sign * value);
+                if (IsServer) endurance.Value = Mathf.Min(endurance.Value, maxEndurance);
+                UpdateEnduranceBar();
+                break;
+            case StatType.HP_REGENERATION:
+                hpRegeneration = Mathf.Max(0f, hpRegeneration + sign * value);
+                break;
+            case StatType.MP_REGENERATION:
+                mpRegeneration = Mathf.Max(0f, mpRegeneration + sign * value);
+                break;
+            case StatType.ENDURANCE_REGENERATION:
+                enduranceRegeneration = Mathf.Max(0f, enduranceRegeneration + sign * value);
+                break;
+            case StatType.SPEED:
+                // modify PlayerController-held move speed
+                moveSpeed = Mathf.Max(0f, moveSpeed + sign * value);
+                break;
+            case StatType.ATTACK:
+                attackDamage += sign * value;
+                break;
+            case StatType.MAGIC_ATTACK:
+                magicAttackDamage += sign * value;
+                break;
+            case StatType.DEFENSE:
+                defense += sign * value;
+                break;
+            case StatType.MAGIC_DEFENSE:
+                magicDefense += sign * value;
+                break;
+            case StatType.ATTACK_SPEED:
+                // not implemented: could modify animator speed or attack timing
+                break;
+            case StatType.LIFESTEAL:
+                lifeSteal = Mathf.Max(0f, lifeSteal + sign * value);
+                break;
+            case StatType.MANASTEAL:
+                manaSteal = Mathf.Max(0f, manaSteal + sign * value);
+                break;
+            case StatType.ENDURANCESTEAL:
+                enduranceSteal = Mathf.Max(0f, enduranceSteal + sign * value);
+                break;
+            case StatType.RANGE:
+                attackRange = Mathf.Max(0f, attackRange + sign * value);
+                break;
+            default:
+                Debug.LogWarning($"ApplyPowerup: stat {stat} not handled on PlayerController");
+                break;
+        }
+        // after applying server-side, notify the owner client so it can update its local display
+        if (IsServer)
+        {
+            // notify only the affected players (owner clients of the target player objects)
+            // we don't know targetPlayerIndex here; the caller ApplyPowerupToTargets will call NotifyClientsOfPowerup separately
+        }
+    }
+
+    [ClientRpc]
+    private void ApplyPowerupClientRpc(int statInt, float value, bool isUpgrade, ClientRpcParams clientRpcParams = default)
+    {
+        // run on client: apply a local-only version so UI and local state reflect the change
+        if (IsServer) return;
+        ApplyPowerupLocal(statInt, value, isUpgrade);
+    }
+
+    // apply stat changes locally (client-side display / local values)
+    private void ApplyPowerupLocal(int statInt, float value, bool isUpgrade)
+    {
+        var stat = (StatType)statInt;
+        float sign = isUpgrade ? 1f : -1f;
+        switch (stat)
+        {
+            case StatType.HP:
+                maxHp = Mathf.Max(1f, maxHp + sign * value);
+                UpdateHealthBar();
+                break;
+            case StatType.MP:
+                maxMp = Mathf.Max(0f, maxMp + sign * value);
+                UpdateManaBar();
+                break;
+            case StatType.ENDURANCE:
+                maxEndurance = Mathf.Max(0f, maxEndurance + sign * value);
+                UpdateEnduranceBar();
+                break;
+            case StatType.HP_REGENERATION:
+                hpRegeneration = Mathf.Max(0f, hpRegeneration + sign * value);
+                break;
+            case StatType.MP_REGENERATION:
+                mpRegeneration = Mathf.Max(0f, mpRegeneration + sign * value);
+                break;
+            case StatType.ENDURANCE_REGENERATION:
+                enduranceRegeneration = Mathf.Max(0f, enduranceRegeneration + sign * value);
+                break;
+            case StatType.SPEED:
+                moveSpeed = Mathf.Max(0f, moveSpeed + sign * value);
+                break;
+            case StatType.ATTACK:
+                attackDamage += sign * value;
+                break;
+            case StatType.MAGIC_ATTACK:
+                magicAttackDamage += sign * value;
+                break;
+            case StatType.DEFENSE:
+                defense += sign * value;
+                break;
+            case StatType.MAGIC_DEFENSE:
+                magicDefense += sign * value;
+                break;
+            case StatType.LIFESTEAL:
+                lifeSteal = Mathf.Max(0f, lifeSteal + sign * value);
+                break;
+            case StatType.MANASTEAL:
+                manaSteal = Mathf.Max(0f, manaSteal + sign * value);
+                break;
+            case StatType.ENDURANCESTEAL:
+                enduranceSteal = Mathf.Max(0f, enduranceSteal + sign * value);
+                break;
+            case StatType.RANGE:
+                attackRange = Mathf.Max(0f, attackRange + sign * value);
+                break;
+            default:
+                Debug.LogWarning($"ApplyPowerupLocal: stat {stat} not handled on PlayerController");
+                break;
         }
     }
 
@@ -334,5 +567,21 @@ public class PlayerController : NetworkBehaviour
             Vector2 p2 = center + new Vector2(Mathf.Cos(a2), Mathf.Sin(a2)) * radius;
             Debug.DrawLine(p1, p2, color, duration);
         }
+    }
+
+    public string GetStats()
+    {
+        return $"ATK: {attackDamage:0.##}\n" +
+               $"MATK: {magicAttackDamage:0.##}\n" +
+               $"DEF: {defense:0.##}\n" +
+               $"MDEF: {magicDefense:0.##}\n" +
+               $"LIFESTEAL: {lifeSteal:P0}\n" +
+               $"MANASTEAL: {manaSteal:P0}\n" +
+               $"ENDSTEAL: {enduranceSteal:P0}\n" +
+               $"HP Regen: {hpRegeneration:0.##}/s\n" +
+               $"MP Regen: {mpRegeneration:0.##}/s\n" +
+               $"END Regen: {enduranceRegeneration:0.##}/s\n" +
+               $"MOVE SPD: {moveSpeed:0.##}\n" +
+               $"SPRINT: x{sprintMultiplier:0.##}";
     }
 }

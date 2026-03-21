@@ -177,7 +177,36 @@ public class UpgradeChoice : MonoBehaviour
     private void OnChoiceSelected(Goblins.Data.Powerup upgrade, Goblins.Data.Powerup downgrade)
     {
         Debug.Log($"UpgradeChoice: Selected upgrade {upgrade?.definition?.stats} ({upgrade?.value:0.##}) + downgrade {downgrade?.definition?.stats} ({downgrade?.value:0.##}) target={upgrade?.targetPlayerIndex}");
-        // TODO: apply powerup to player here (apply upgrade and maybe apply/remove downgrade)
+        // try to request server to apply the powerups via the local player's PlayerController
+        try
+        {
+            if (Unity.Netcode.NetworkManager.Singleton != null)
+            {
+                var local = Unity.Netcode.NetworkManager.Singleton.LocalClient;
+                if (local != null && local.PlayerObject != null)
+                {
+                    var pc = local.PlayerObject.GetComponent<PlayerController>();
+                    if (pc != null)
+                    {
+                        if (upgrade != null && upgrade.definition != null)
+                        {
+                            pc.RequestApplyPowerupServerRpc((int)upgrade.definition.stat, upgrade.value, upgrade.targetPlayerIndex, true);
+                        }
+                        if (downgrade != null && downgrade.definition != null)
+                        {
+                            pc.RequestApplyPowerupServerRpc((int)downgrade.definition.stat, downgrade.value, downgrade.targetPlayerIndex, false);
+                        }
+                    }
+                    else Debug.LogWarning("UpgradeChoice: local player PlayerController not found");
+                }
+                else Debug.LogWarning("UpgradeChoice: local client/playerobject not available");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning("UpgradeChoice: failed to request apply powerups: " + ex.Message);
+        }
         ClearChoices();
+        SetActive(false);
     }
 }

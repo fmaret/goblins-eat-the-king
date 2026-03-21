@@ -4,8 +4,7 @@ using Unity.Netcode;
 
 public class PlayerMovement : NetworkBehaviour
 {
-    public float moveSpeed = 3f;
-    public float sprintMultiplier = 2f;
+    // movement values are stored in PlayerController to keep player stats centralized
     [Header("Stamina")]
     public float enduranceDrainPerSecond = 15f;
     private Rigidbody2D rb;
@@ -78,7 +77,14 @@ public class PlayerMovement : NetworkBehaviour
     void FixedUpdate()
     {
         if (!IsOwner || IsAttacking) return;
-        float currentSpeed = moveSpeed * (netIsSprinting.Value ? sprintMultiplier : 1f);
+        float baseSpeed = 3f;
+        float mult = 2f;
+        if (playerController != null)
+        {
+            baseSpeed = playerController.MoveSpeed;
+            mult = playerController.SprintMultiplier;
+        }
+        float currentSpeed = baseSpeed * (netIsSprinting.Value ? mult : 1f);
         rb.MovePosition(rb.position + netMovement.Value * currentSpeed * Time.fixedDeltaTime);
 
         // consume endurance while sprinting
