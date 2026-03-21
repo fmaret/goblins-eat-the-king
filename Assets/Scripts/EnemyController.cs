@@ -26,6 +26,9 @@ public class EnemyController : NetworkBehaviour
     private NetworkVariable<bool> netIsDead = new NetworkVariable<bool>(
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    [HideInInspector] public int roomX = -1, roomY = -1;
+    public void SetRoom(int x, int y) { roomX = x; roomY = y; }
+
     private EnemyMovement enemyMovement;
     private Animator animator;
     private Transform target;
@@ -191,7 +194,10 @@ public class EnemyController : NetworkBehaviour
 
             // schedule despawn on server
             if (IsServer)
+            {
+                DungeonGenerator.Instance?.NotifyEnemyDied(roomX, roomY);
                 StartCoroutine(DespawnAfterDelay());
+            }
         }
     }
 

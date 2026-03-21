@@ -31,6 +31,19 @@ public class RoomBuilder : MonoBehaviour
         if (info.openEast)  SetupDoorTrigger(doorEast,  info.x, info.y, 2);
         if (info.openWest)  SetupDoorTrigger(doorWest,  info.x, info.y, 3);
 
+        // Zone de détection d'entrée dans la salle (spawn ennemis)
+        float triggerSize = DungeonGenerator.Instance != null
+            ? DungeonGenerator.Instance.RoomSize * 0.4f
+            : 4f;
+        var entranceGO = new GameObject("RoomEntranceTrigger");
+        entranceGO.transform.SetParent(transform, false);
+        var entranceCol = entranceGO.AddComponent<BoxCollider2D>();
+        entranceCol.isTrigger = true;
+        entranceCol.size = new Vector2(triggerSize, triggerSize);
+        var ert = entranceGO.AddComponent<RoomEntranceTrigger>();
+        ert.roomX = info.x;
+        ert.roomY = info.y;
+
         // Couleur selon le type
         if (floor != null)
         {

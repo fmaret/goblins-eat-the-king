@@ -17,9 +17,14 @@ public class DungeonGenerator : NetworkBehaviour
     [Header("Elements")]
     [SerializeField] private GameObject[] elementPrefabs; // piege, coffre, table
 
+    [Header("Ennemis")]
+    [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private int enemiesPerRoom = 10;
+
     [Header("Spawn joueur")]
     [SerializeField] private Vector2Int spawnCell = new Vector2Int(0, 2);
 
+    public float RoomSize => roomSize;
     public Vector3 SpawnPosition => new Vector3(spawnCell.x * roomSize, -spawnCell.y * roomSize, 0);
 
     private RoomInfo bossRoom;
@@ -36,6 +41,11 @@ public class DungeonGenerator : NetworkBehaviour
 
     // Référence aux RoomBuilders pour ouvrir les portes
     private readonly Dictionary<(int, int), RoomBuilder> rooms = new();
+
+    // Gestion ennemis par salle (server only)
+    private readonly HashSet<(int, int)> roomEntered = new();
+    private readonly Dictionary<(int, int), int> roomEnemyCounts = new();
+    private readonly HashSet<(int, int)> roomCleared = new();
 
     private void Awake()
     {
@@ -136,19 +146,77 @@ public class DungeonGenerator : NetworkBehaviour
         }
     }
 
+    // Appelé par RoomEntranceTrigger quand un joueur entre dans la salle
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void EnterRoomServerRpc(int x, int y)
+    {
+        var key = (x, y);
+        if (roomEntered.Contains(key)) return;
+        roomEntered.Add(key);
+
+        // Salle boss ou pas d'ennemi prefab → considérée comme cleared
+        if (enemyPrefab == null || (grid[x, y] != null && grid[x, y].type == RoomType.Boss))
+        {
+            roomCleared.Add(key);
+            return;
+        }
+
+        roomEnemyCounts[key] = enemiesPerRoom;
+        for (int i = 0; i < enemiesPerRoom; i++)
+        {
+            Vector2 offset = Random.insideUnitCircle * (roomSize * 0.3f);
+            Vector3 pos = new Vector3(x * roomSize + offset.x, -y * roomSize + offset.y, 0f);
+            var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
+            var ec = go.GetComponent<EnemyController>();
+            ec.SetRoom(x, y);
+            go.GetComponent<NetworkObject>().Spawn();
+        }
+    }
+
+    // Appelé par EnemyController quand un ennemi meurt (server only)
+    public void NotifyEnemyDied(int x, int y)
+    {
+        var key = (x, y);
+        if (!roomEnemyCounts.ContainsKey(key))
+        {
+            Debug.LogWarning($"[NotifyEnemyDied] Salle ({x},{y}) inconnue — roomX/roomY mal assignés ?");
+            return;
+        }
+        roomEnemyCounts[key]--;
+        Debug.Log($"[NotifyEnemyDied] Salle ({x},{y}) → {roomEnemyCounts[key]} ennemis restants");
+        if (roomEnemyCounts[key] <= 0)
+            roomCleared.Add(key);
+    }
+
     // Appelé par DoorTrigger sur le client propriétaire
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void OpenDoorServerRpc(int x, int y, int direction)
     {
+        // Bloqué si des ennemis sont encore en vie dans cette salle
+        int remaining = roomEnemyCounts.TryGetValue((x, y), out int c) ? c : -1;
+        Debug.Log($"[OpenDoor] Salle ({x},{y}) dir={direction} cleared={roomCleared.Contains((x,y))} remaining={remaining}");
+        if (!roomCleared.Contains((x, y))) return;
         OpenDoorClientRpc(x, y, direction);
     }
 
-    // Synchronise l'ouverture de la porte sur tous les clients
+    // Synchronise l'ouverture de la porte sur tous les clients (+ la porte opposée)
     [ClientRpc]
     private void OpenDoorClientRpc(int x, int y, int direction)
     {
         if (rooms.TryGetValue((x, y), out var builder))
             builder.OpenDoor(direction);
+
+        // Ouvre aussi le côté opposé dans la salle adjacente
+        var (nx, ny, opp) = direction switch
+        {
+            0 => (x,     y - 1, 1),
+            1 => (x,     y + 1, 0),
+            2 => (x + 1, y,     3),
+            3 => (x - 1, y,     2),
+            _ => (x,     y,     direction)
+        };
+        if (rooms.TryGetValue((nx, ny), out var adjBuilder))
+            adjBuilder.OpenDoor(opp);
     }
 
     public override void OnNetworkDespawn()
