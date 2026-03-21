@@ -348,7 +348,7 @@ MonoBehaviour:
   roomPrefab: {fileID: 4056034874441315933, guid: 99b611696e909984b8340da730359edf, type: 3}
   elementPrefabs: []
   enemyPrefab: {fileID: 646927935402244903, guid: b39b805b529e5409ebb2557da3d91cc7, type: 3}
-  enemiesPerRoom: 1
+  enemiesPerRoom: 5
   spawnCell: {x: 2, y: 5}
 --- !u!1 &193233382
 GameObject:

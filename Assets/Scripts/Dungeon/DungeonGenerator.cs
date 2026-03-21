@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -14,9 +15,6 @@ public class DungeonGenerator : NetworkBehaviour
     [Header("Prefabs salles")]
     [SerializeField] private GameObject roomPrefab;
 
-    [Header("Elements")]
-    [SerializeField] private GameObject[] elementPrefabs; // piege, coffre, table
-
     [Header("Ennemis")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private int enemiesPerRoom = 10;
@@ -24,10 +22,9 @@ public class DungeonGenerator : NetworkBehaviour
     [Header("Spawn joueur")]
     [SerializeField] private Vector2Int spawnCell = new Vector2Int(0, 2);
 
-    public float RoomSize => roomSize;
+    public float RoomSize    => roomSize;
+    public int   DungeonSeed => dungeonSeed.Value;
     public Vector3 SpawnPosition => new Vector3(spawnCell.x * roomSize, -spawnCell.y * roomSize, 0);
-
-    private RoomInfo bossRoom;
 
     // Seed synchronisée — le host la génère, le client la reçoit
     private NetworkVariable<int> dungeonSeed = new NetworkVariable<int>(
@@ -47,6 +44,7 @@ public class DungeonGenerator : NetworkBehaviour
     private readonly HashSet<(int, int)> roomEntered = new();
     private readonly Dictionary<(int, int), int> roomEnemyCounts = new();
     private readonly HashSet<(int, int)> roomCleared = new();
+    private readonly Dictionary<(int, int), int> roomEntryDirection = new(); // direction d'entrée par salle
 
     private void Awake()
     {
@@ -128,6 +126,17 @@ public class DungeonGenerator : NetworkBehaviour
     {
         rooms.Clear();
         furnishers.Clear();
+        roomEntered.Clear();
+        roomEnemyCounts.Clear();
+        roomCleared.Clear();
+        roomEntryDirection.Clear();
+
+        // Salle de départ : pas d'ennemis
+        if (IsServer)
+        {
+            roomEntered.Add((spawnCell.x, spawnCell.y));
+            roomCleared.Add((spawnCell.x, spawnCell.y));
+        }
 
         for (int x = 0; x < gridWidth; x++)
         {
@@ -142,7 +151,7 @@ public class DungeonGenerator : NetworkBehaviour
                 room.name = y == 0 ? "Room_Boss" : $"Room_{x}_{y}";
 
                 var builder = room.GetComponent<RoomBuilder>();
-                builder.Build(grid[x, y], elementPrefabs);
+                builder.Build(grid[x, y]);
                 rooms[(x, y)] = builder;
                 if (room.TryGetComponent<RoomFurnisher>(out var furnisher))
                     furnishers[(x, y)] = furnisher;
@@ -150,13 +159,31 @@ public class DungeonGenerator : NetworkBehaviour
         }
     }
 
-    // Appelé par RoomEntranceTrigger quand un joueur entre dans la salle
+    // Appelé par DoorTrigger (entryDirection = côté d'entrée dans la nouvelle salle)
+    // ou RoomEntranceTrigger pour la salle de départ (entryDirection = -1)
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    public void EnterRoomServerRpc(int x, int y)
+    public void EnterRoomServerRpc(int x, int y, int entryDirection)
     {
         var key = (x, y);
         if (roomEntered.Contains(key)) return;
         roomEntered.Add(key);
+
+        // Mémorise la direction d'entrée (pour rouvrir les bonnes portes au clear)
+        if (entryDirection >= 0)
+            roomEntryDirection[key] = entryDirection;
+
+        // Ferme la porte derrière le joueur
+        if (entryDirection >= 0)
+        {
+            (int px, int py) = entryDirection switch
+            {
+                0 => (x, y - 1), 1 => (x, y + 1),
+                2 => (x + 1, y), 3 => (x - 1, y),
+                _ => (x, y)
+            };
+            CloseDoorClientRpc(x, y, entryDirection);
+            CloseDoorClientRpc(px, py, entryDirection ^ 1);
+        }
 
         if (enemyPrefab == null) { roomCleared.Add(key); return; }
 
@@ -177,15 +204,40 @@ public class DungeonGenerator : NetworkBehaviour
         else
         {
             roomEnemyCounts[key] = enemiesPerRoom;
-            for (int i = 0; i < enemiesPerRoom; i++)
-            {
-                Vector2 offset = Random.insideUnitCircle * (roomSize * 0.3f);
-                Vector3 pos = new Vector3(x * roomSize + offset.x, -y * roomSize + offset.y, 0f);
-                var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
-                var ec = go.GetComponent<EnemyController>();
-                ec.SetRoom(x, y);
-                go.GetComponent<NetworkObject>().Spawn();
-            }
+            StartCoroutine(SpawnEnemiesProgressively(x, y, entryDirection));
+        }
+    }
+
+    private IEnumerator SpawnEnemiesProgressively(int x, int y, int entryDirection)
+    {
+        var info = grid[x, y];
+        float cx = x * roomSize;
+        float cy = -y * roomSize;
+        float d  = roomSize * 0.45f;
+
+        // Points de spawn = portes ouvertes SAUF la porte d'entrée
+        var spawnPoints = new List<Vector3>();
+        if (info.openNorth && entryDirection != 0) spawnPoints.Add(new Vector3(cx,     cy + d, 0f));
+        if (info.openSouth && entryDirection != 1) spawnPoints.Add(new Vector3(cx,     cy - d, 0f));
+        if (info.openEast  && entryDirection != 2) spawnPoints.Add(new Vector3(cx + d, cy,     0f));
+        if (info.openWest  && entryDirection != 3) spawnPoints.Add(new Vector3(cx - d, cy,     0f));
+
+        // Fallback : centre de la salle (salle de départ ou aucune autre porte)
+        if (spawnPoints.Count == 0)
+            spawnPoints.Add(new Vector3(cx, cy, 0f));
+
+        for (int i = 0; i < enemiesPerRoom; i++)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            Vector3 origin = spawnPoints[Random.Range(0, spawnPoints.Count)];
+            Vector2 offset = Random.insideUnitCircle * 0.6f;
+            Vector3 pos    = origin + new Vector3(offset.x, offset.y, 0f);
+
+            var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
+            var ec = go.GetComponent<EnemyController>();
+            ec.SetRoom(x, y);
+            go.GetComponent<NetworkObject>().Spawn();
         }
     }
 
@@ -195,8 +247,38 @@ public class DungeonGenerator : NetworkBehaviour
         var key = (x, y);
         if (!roomEnemyCounts.ContainsKey(key)) return;
         roomEnemyCounts[key]--;
-        if (roomEnemyCounts[key] <= 0)
-            roomCleared.Add(key);
+        if (roomEnemyCounts[key] > 0) return;
+
+        roomCleared.Add(key);
+
+        // Si un joueur est déjà dans un trigger de porte, ouvre-la immédiatement
+        OpenDoorIfPlayerPresent(x, y);
+    }
+
+    private void OpenDoorIfPlayerPresent(int x, int y)
+    {
+        var info = grid[x, y];
+        if (info == null) return;
+        float cx = x * roomSize, cy = -y * roomSize;
+        float d = roomSize * 0.45f;
+
+        if (info.openNorth) CheckDoorOverlap(x, y, 0, cx,     cy + d);
+        if (info.openSouth) CheckDoorOverlap(x, y, 1, cx,     cy - d);
+        if (info.openEast)  CheckDoorOverlap(x, y, 2, cx + d, cy    );
+        if (info.openWest)  CheckDoorOverlap(x, y, 3, cx - d, cy    );
+    }
+
+    private void CheckDoorOverlap(int x, int y, int dir, float doorX, float doorY)
+    {
+        var hits = Physics2D.OverlapBoxAll(new Vector2(doorX, doorY), new Vector2(1.5f, 1.5f), 0f);
+        foreach (var hit in hits)
+        {
+            if (hit.GetComponent<PlayerController>() != null)
+            {
+                OpenDoorClientRpc(x, y, dir);
+                return;
+            }
+        }
     }
 
     // Appelé par DoorTrigger sur le client propriétaire
@@ -225,6 +307,13 @@ public class DungeonGenerator : NetworkBehaviour
         };
         if (rooms.TryGetValue((nx, ny), out var adjBuilder))
             adjBuilder.OpenDoor(opp);
+    }
+
+    [ClientRpc]
+    private void CloseDoorClientRpc(int x, int y, int direction)
+    {
+        if (rooms.TryGetValue((x, y), out var builder))
+            builder.CloseDoor(direction);
     }
 
     // --- Pots ---
@@ -258,6 +347,8 @@ public class DungeonGenerator : NetworkBehaviour
         dungeonSeed.OnValueChanged -= OnSeedReceived;
     }
 }
+
+public enum RoomType { Normal, Boss }
 
 // Structure de données d'une salle
 public class RoomInfo

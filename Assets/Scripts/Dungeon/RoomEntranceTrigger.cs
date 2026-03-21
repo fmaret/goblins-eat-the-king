@@ -13,6 +13,7 @@ public class RoomEntranceTrigger : MonoBehaviour
         var player = other.GetComponent<PlayerController>();
         if (player == null || !player.IsOwner) return;
         triggered = true;
-        DungeonGenerator.Instance.EnterRoomServerRpc(roomX, roomY);
+        DungeonGenerator.Instance.EnterRoomServerRpc(roomX, roomY, -1);
     }
 }
+    

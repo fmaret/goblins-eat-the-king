@@ -17,7 +17,7 @@ public class RoomBuilder : MonoBehaviour
     [Header("Sol")]
     [SerializeField] private SpriteRenderer floor;
 
-    public void Build(RoomInfo info, GameObject[] elementPrefabs)
+    public void Build(RoomInfo info)
     {
         // Murs et ouvertures
         SetWall(wallNorth, doorNorth, info.openNorth);
@@ -49,30 +49,16 @@ public class RoomBuilder : MonoBehaviour
         {
             floor.color = info.type == RoomType.Boss
                 ? new Color(0.6f, 0.1f, 0.1f) // rouge foncé pour le boss
-                : new Color(0.3f, 0.3f, 0.35f); // gris pour les salles normales
+                : new Color(1f, 1f, 1f); // gris pour les salles normales
         }
 
         // Décor et interactables
         if (TryGetComponent<RoomFurnisher>(out var furnisher))
-            furnisher.Furnish(info, DungeonGenerator.Instance != null ? DungeonGenerator.Instance.RoomSize : 10f);
-
-        // Spawn éléments aléatoires (legacy)
-        if (elementPrefabs != null && elementPrefabs.Length > 0)
         {
-            int count = Random.Range(1, 4);
-            for (int i = 0; i < count; i++)
-            {
-                GameObject prefab = elementPrefabs[Random.Range(0, elementPrefabs.Length)];
-
-                // Position aléatoire dans la salle (évite les bords)
-                Vector2 offset = new Vector2(
-                    Random.Range(-3.5f, 3.5f),
-                    Random.Range(-3.5f, 3.5f)
-                );
-
-                Instantiate(prefab, transform.position + (Vector3)offset, Quaternion.identity, transform);
-            }
+            var gen = DungeonGenerator.Instance;
+            furnisher.Furnish(info, gen != null ? gen.RoomSize : 10f, gen != null ? gen.DungeonSeed : 0);
         }
+
     }
 
     private void SetWall(GameObject wall, GameObject door, bool isOpen)
@@ -111,5 +97,17 @@ public class RoomBuilder : MonoBehaviour
             _ => null
         };
         if (door != null) door.SetActive(false);
+    }
+
+    // Referme la porte derrière le joueur (porte visible, mur caché)
+    public void CloseDoor(int direction)
+    {
+        switch (direction)
+        {
+            case 0: if (wallNorth != null) wallNorth.SetActive(false); if (doorNorth != null) doorNorth.SetActive(true); break;
+            case 1: if (wallSouth != null) wallSouth.SetActive(false); if (doorSouth != null) doorSouth.SetActive(true); break;
+            case 2: if (wallEast  != null) wallEast .SetActive(false); if (doorEast  != null) doorEast .SetActive(true); break;
+            case 3: if (wallWest  != null) wallWest .SetActive(false); if (doorWest  != null) doorWest .SetActive(true); break;
+        }
     }
 }

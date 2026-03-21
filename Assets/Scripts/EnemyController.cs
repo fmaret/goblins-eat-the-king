@@ -54,6 +54,17 @@ public class EnemyController : NetworkBehaviour
         if (IsServer)
             hp.Value = maxHp;
 
+        // Ignore les collisions physiques avec les joueurs (évite de les pousser)
+        var myCol = GetComponent<Collider2D>();
+        if (myCol != null)
+        {
+            foreach (var player in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            {
+                var pc = player.GetComponent<Collider2D>();
+                if (pc != null) Physics2D.IgnoreCollision(myCol, pc, true);
+            }
+        }
+
         hp.OnValueChanged += OnHpChanged;
         netIsDead.OnValueChanged += (oldV, newV) => { if (newV && animator != null) animator.SetTrigger("Die"); };
         UpdateHealthBar();
@@ -108,10 +119,8 @@ public class EnemyController : NetworkBehaviour
 
         if (dist <= attackRange)
             state = State.Attack;
-        else if (dist <= detectionRange)
-            state = State.Chase;
         else
-            state = State.Idle;
+            state = State.Chase;
 
         if (state == State.Chase)
         {

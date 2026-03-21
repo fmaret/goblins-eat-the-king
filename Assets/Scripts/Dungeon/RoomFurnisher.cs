@@ -16,10 +16,10 @@ public class RoomFurnisher : MonoBehaviour
     private readonly List<PotController> pots = new();
     private ChestController chest;
 
-    public void Furnish(RoomInfo info, float roomSize)
+    public void Furnish(RoomInfo info, float roomSize, int dungeonSeed)
     {
-        // RNG déterministe basé sur la position de la salle (même résultat sur tous les clients)
-        var rng = new System.Random(info.x * 7919 + info.y * 6271);
+        // RNG déterministe : même résultat sur tous les clients, change à chaque partie
+        var rng = new System.Random(dungeonSeed ^ (info.x * 7919 + info.y * 6271));
         float half  = roomSize * 0.45f;
         float inner = half * 0.55f;
 
