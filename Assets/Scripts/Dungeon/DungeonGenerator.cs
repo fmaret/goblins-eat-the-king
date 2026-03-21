@@ -126,6 +126,19 @@ public class DungeonGenerator : NetworkBehaviour
         }
 
         BuildDungeon();
+
+        if (IsServer)
+            TeleportPlayersToSpawnClientRpc();
+    }
+
+    [ClientRpc]
+    private void TeleportPlayersToSpawnClientRpc()
+    {
+        foreach (var player in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+        {
+            if (!player.IsOwner) continue;
+            player.transform.position = SpawnPosition;
+        }
     }
 
     private void BuildDungeon()
