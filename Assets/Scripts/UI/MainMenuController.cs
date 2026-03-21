@@ -122,49 +122,12 @@ public class MainMenuController : MonoBehaviour
     void OnPlayClicked()
     {
         // show play buttons (Host / Join) next to Play if group exists
+        Debug.Log("Play clicked");
+        Debug.Log("playButtonsGroup: " + (playButtonsGroup != null ? playButtonsGroup.name : "null"));
         if (playButtonsGroup != null)
         {
             playButtonsGroup.SetActive(!playButtonsGroup.activeSelf);
         }
-        else
-        {
-            // fallback: start host or load next scene
-            if (NetworkManager.Singleton != null && !NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
-            {
-                Debug.Log("MainMenu: Starting host");
-                NetworkManager.Singleton.StartHost();
-            }
-            else
-            {
-                int current = SceneManager.GetActiveScene().buildIndex;
-                int total = SceneManager.sceneCountInBuildSettings;
-                int next = -1;
-                for (int i = current + 1; i < total; i++) { next = i; break; }
-                if (next == -1 && total > 0) next = 0;
-                if (next >= 0) SceneManager.LoadScene(next);
-            }
-        }
-    }
-
-    // Called by Host button inside playButtonsGroup
-    public void OnPlayHostClicked()
-    {
-        // start host if netcode available
-        if (NetworkManager.Singleton != null)
-        {
-            if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
-            {
-                NetworkManager.Singleton.StartHost();
-            }
-        }
-
-        // create local lobby and show lobby UI
-        Goblins.Lobby.LobbyManager.Instance.CreateLobby();
-        if (lobbyPanel != null)
-        {
-            lobbyPanel.SetActive(true);
-        }
-        if (playButtonsGroup != null) playButtonsGroup.SetActive(false);
     }
 
     // Called by Join button inside playButtonsGroup

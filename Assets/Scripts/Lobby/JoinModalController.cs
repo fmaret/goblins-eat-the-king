@@ -6,7 +6,6 @@ using Goblins.Lobby;
 public class JoinModalController : MonoBehaviour
 {
     public TMP_InputField codeInput;
-    public TMP_InputField nameInput;
     public Button colorCycleButton;
     public TextMeshProUGUI colorLabel;
     public Button validateButton;
@@ -18,7 +17,10 @@ public class JoinModalController : MonoBehaviour
     void Start()
     {
         if (colorCycleButton != null) colorCycleButton.onClick.AddListener(CycleColor);
-        if (validateButton != null) validateButton.onClick.AddListener(OnValidate);
+        if (validateButton != null) {
+            validateButton.onClick.AddListener(OnValidate);
+            Debug.Log("JoinModalController: hooked validateButton listener");
+        }
         UpdateColorLabel();
         if (lobbyPanel == null) lobbyPanel = GameObject.Find("LobbyPanel");
     }
@@ -34,18 +36,48 @@ public class JoinModalController : MonoBehaviour
         if (colorLabel != null) colorLabel.text = colors[colorIndex].ToString();
     }
 
-    void OnValidate()
+    async void OnValidate()
     {
-        if (codeInput == null || nameInput == null) return;
+        if (codeInput == null) return;
         var code = codeInput.text.Trim();
-        var name = nameInput.text.Trim();
-        if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(name)) return;
+        if (string.IsNullOrEmpty(code)) return;
 
-        // attempt local join (works if host exists in same process)
-        bool ok = LobbyManager.Instance != null && LobbyManager.Instance.JoinLobby(code, name, colors[colorIndex]);
+        bool ok = false;
+        // prefer Relay if LobbyManager is configured for it
+        if (LobbyManager.Instance != null && LobbyManager.Instance.useRelay)
+        {
+            try
+            {
+                ok = await LobbyManager.Instance.StartClientRelayAsync(code);
+                if (ok)
+                {
+                    // register this player on the server so the host updates everyone
+                    LobbyManager.Instance.RegisterPlayerInfoServerRpc("Player", colors[colorIndex].r, colors[colorIndex].g, colors[colorIndex].b, colors[colorIndex].a);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning("JoinModal: StartClientRelayAsync failed: " + ex.Message);
+                ok = false;
+            }
+        }
+
+        // if relay not used or failed, try local join
+        if (!ok && LobbyManager.Instance != null)
+        {
+            ok = LobbyManager.Instance.JoinLobby(code, colors[colorIndex]);
+        }
+
+        // final fallback: try editor-local registry directly (in case Instance isn't present)
+        #if UNITY_EDITOR
+        if (!ok)
+        {
+            ok = Goblins.Lobby.EditorLocalLobbyRegistry.TryJoin(code, new Goblins.Lobby.LobbyPlayer { name = "Player", color = colors[colorIndex] });
+        }
+        #endif
+
         if (ok)
         {
-            // close modal and open lobby
             this.gameObject.SetActive(false);
             if (lobbyPanel != null) lobbyPanel.SetActive(true);
         }
