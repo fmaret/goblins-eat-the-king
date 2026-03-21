@@ -25,5 +25,10 @@
     { "key": "LUCK", "value": "Luck" },
     { "key": "VISION_RANGE", "value": "Vision Range" },
     { "key": "RANGE", "value": "Range" }
+    ,
+    { "key": "Play", "value": "Play" },
+    { "key": "Options", "value": "Options" },
+    { "key": "Upgrades", "value": "Upgrades" },
+    { "key": "Quit", "value": "Quit" }
   ]
 }
