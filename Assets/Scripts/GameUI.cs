@@ -1,79 +1,124 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections.Generic;
 
 public class GameUI : MonoBehaviour
 {
-    public static GameUI Instance { get; private set; }
+	public static GameUI Instance { get; private set; }
 
-    [Header("Player UI")]
-    [SerializeField] private StatBar playerHealthBar;
-    [Header("Header Players")]
-    [SerializeField] private Transform playersHeaderContainer;
-    [SerializeField] private GameObject playerInfoPrefab;
-    private System.Collections.Generic.Dictionary<ulong, PlayerInfo> playerEntries = new System.Collections.Generic.Dictionary<ulong, PlayerInfo>();
+	[Header("Player UI")]
+	[SerializeField] private StatBar playerHealthBar;
+	[Header("Header Players")]
+	[SerializeField] private Transform playersHeaderContainer;
+	[SerializeField] private GameObject playerInfoPrefab;
 
-    void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
+	private Dictionary<ulong, PlayerInfo> playerEntries = new Dictionary<ulong, PlayerInfo>();
 
-    public void SetPlayerHealth(float current, float max, string text = null)
-    {
-        if (playerHealthBar != null)
-            playerHealthBar.Set(current, max, text);
-    }
+	void Awake()
+	{
+		if (Instance != null && Instance != this)
+		{
+			Destroy(gameObject);
+			return;
+		}
+		Instance = this;
+		DontDestroyOnLoad(gameObject);
+	}
 
-    public void AddPlayerEntry(ulong clientId, string displayName)
-    {
-        Debug.Log($"GameUI: Attempting to add player entry for {clientId} ({displayName}) on local client {NetworkManager.Singleton?.LocalClientId}");
-        if (playerInfoPrefab == null || playersHeaderContainer == null) return;
-        if (playerEntries.ContainsKey(clientId)) return;
-        Debug.Log($"GameUI: Adding player entry for {clientId} ({displayName}) on local client {NetworkManager.Singleton?.LocalClientId}");
-        var go = Instantiate(playerInfoPrefab, playersHeaderContainer);
-        go.SetActive(true);
-        // ensure correct rect transform scale when instantiating UI prefabs
-        var rt = go.GetComponent<RectTransform>();
-        if (rt != null) rt.localScale = Vector3.one;
-        var info = go.GetComponent<PlayerInfo>();
-        Debug.Log($"GameUI: Instantiated prefab '{go.name}', activeInHierarchy={go.activeInHierarchy}, parent='{go.transform.parent?.name}'");
-        if (info != null)
-        {
-            info.SetName(displayName);
-            info.SetHealth(1f, 1f, "");
-            playerEntries.Add(clientId, info);
-        }
-        else
-        {
-            Debug.LogWarning("GameUI: instantiated prefab missing PlayerInfo component, destroying instance.");
-            Destroy(go);
-        }
-    }
+	void Start()
+	{
+		if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
+			gameObject.SetActive(false);
+		// populate existing connected clients
+		if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
+		{
+			foreach (var kv in NetworkManager.Singleton.ConnectedClients)
+			{
+				AddPlayerEntry(kv.Key, $"Player {kv.Key}");
+			}
+		}
+	}
 
-    public void RemovePlayerEntry(ulong clientId)
-    {
-        if (!playerEntries.TryGetValue(clientId, out var info)) return;
-        if (info != null)
-            Destroy(info.gameObject);
-        playerEntries.Remove(clientId);
-    }
+	void OnEnable()
+	{
+		if (NetworkManager.Singleton != null)
+		{
+			NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+			NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+		}
+	}
 
-    public void SetPlayerEntryHealth(ulong clientId, float current, float max, string text = null)
-    {
-        if (!playerEntries.TryGetValue(clientId, out var info))
-        {
-            // create a fallback entry if the player wasn't registered yet
-            AddPlayerEntry(clientId, $"Player {clientId}");
-            playerEntries.TryGetValue(clientId, out info);
-        }
+	void OnDisable()
+	{
+		if (NetworkManager.Singleton != null)
+		{
+			NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+			NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+		}
+	}
 
-        if (info != null)
-            info.SetHealth(current, max, text);
-    }
+	private void OnClientConnected(ulong clientId)
+	{
+		if (NetworkManager.Singleton == null) return;
+		if (clientId == NetworkManager.Singleton.LocalClientId)
+			gameObject.SetActive(false);
 
+		if (!playerEntries.ContainsKey(clientId))
+			AddPlayerEntry(clientId, $"Player {clientId}");
+	}
+
+	private void OnClientDisconnected(ulong clientId)
+	{
+		if (NetworkManager.Singleton == null) return;
+		if (clientId == NetworkManager.Singleton.LocalClientId)
+			gameObject.SetActive(true);
+
+		RemovePlayerEntry(clientId);
+	}
+
+	public void SetPlayerHealth(float current, float max, string text = null)
+	{
+		if (playerHealthBar != null)
+			playerHealthBar.Set(current, max, text);
+	}
+
+	public void AddPlayerEntry(ulong clientId, string displayName)
+	{
+		if (playerInfoPrefab == null || playersHeaderContainer == null) return;
+		if (playerEntries.ContainsKey(clientId)) return;
+
+		var go = Instantiate(playerInfoPrefab, playersHeaderContainer);
+		go.SetActive(true);
+		var rt = go.GetComponent<RectTransform>(); if (rt != null) rt.localScale = Vector3.one;
+		var info = go.GetComponent<PlayerInfo>();
+		if (info != null)
+		{
+			info.SetName(displayName);
+			info.SetHealth(1f, 1f, "");
+			playerEntries.Add(clientId, info);
+		}
+		else
+		{
+			Debug.LogWarning("GameUI: prefab missing PlayerInfo component");
+			Destroy(go);
+		}
+	}
+
+	public void RemovePlayerEntry(ulong clientId)
+	{
+		if (!playerEntries.TryGetValue(clientId, out var info)) return;
+		if (info != null) Destroy(info.gameObject);
+		playerEntries.Remove(clientId);
+	}
+
+	public void SetPlayerEntryHealth(ulong clientId, float current, float max, string text = null)
+	{
+		if (!playerEntries.TryGetValue(clientId, out var info))
+		{
+			AddPlayerEntry(clientId, $"Player {clientId}");
+			playerEntries.TryGetValue(clientId, out info);
+		}
+
+		if (info != null) info.SetHealth(current, max, text);
+	}
 }

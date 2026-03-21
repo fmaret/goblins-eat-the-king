@@ -1,0 +1,29 @@
+{
+  "entries": [
+    { "key": "AllPlayers", "value": "All Players" },
+    { "key": "PlayerFormat", "value": "Player {0}" },
+    { "key": "TYPE_UPGRADE", "value": "Upgrade" },
+    { "key": "TYPE_DOWNGRADE", "value": "Downgrade" },
+    { "key": "HP", "value": "HP" },
+    { "key": "MP", "value": "MP" },
+    { "key": "SPEED", "value": "Speed" },
+    { "key": "ATTACK", "value": "Attack" },
+    { "key": "DEFENSE", "value": "Defense" },
+    { "key": "MAGIC_ATTACK", "value": "Magic Attack" },
+    { "key": "MAGIC_DEFENSE", "value": "Magic Defense" },
+    { "key": "ATTACK_SPEED", "value": "Attack Speed" },
+    { "key": "CRITICAL_RATE", "value": "Critical Rate" },
+    { "key": "CRITICAL_DAMAGE", "value": "Critical Damage" },
+    { "key": "LIFESTEAL", "value": "Lifesteal" },
+    { "key": "MANASTEAL", "value": "Manasteal" },
+    { "key": "ENDURANCE", "value": "Endurance" },
+    { "key": "ENDURANCE_REGENERATION", "value": "Endurance Regeneration" },
+    { "key": "HP_REGENERATION", "value": "HP Regeneration" },
+    { "key": "MP_REGENERATION", "value": "MP Regeneration" },
+    { "key": "ENDURANCESTEAL", "value": "Endurancesteal" },
+    { "key": "DODGE_RATE", "value": "Dodge Rate" },
+    { "key": "LUCK", "value": "Luck" },
+    { "key": "VISION_RANGE", "value": "Vision Range" },
+    { "key": "RANGE", "value": "Range" }
+  ]
+}

@@ -61,6 +61,10 @@ public class PlayerController : NetworkBehaviour
         if (!IsOwner) return;
         if (!playerMovement.IsAttacking && InputSystem.actions["Attack"].WasPressedThisFrame())
             StartCoroutine(AttackRoutine());
+        if (InputSystem.actions["Attack"].WasPressedThisFrame()) {
+            UpgradeChoice.Instance.GenerateNewChoices();
+            UpgradeChoice.Instance.SetActive(true);
+        }
     }
 
     // Appelé par EnemyController (côté serveur)
