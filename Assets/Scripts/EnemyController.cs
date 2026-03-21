@@ -194,6 +194,7 @@ public class EnemyController : NetworkBehaviour
     public void ApplyDamage(float damage)
     {
         if (!IsServer) return;
+        if (netIsDead.Value) return;
         hp.Value = Mathf.Max(0f, hp.Value - damage);
         // play hit animation on clients
         PlayHitClientRpc();
@@ -212,7 +213,8 @@ public class EnemyController : NetworkBehaviour
             // schedule despawn on server
             if (IsServer)
             {
-                DungeonGenerator.Instance?.NotifyEnemyDied(roomX, roomY);
+                if (DungeonGenerator.Instance != null)
+                    DungeonGenerator.Instance.NotifyEnemyDied(roomX, roomY, transform.position);
                 StartCoroutine(DespawnAfterDelay());
             }
         }

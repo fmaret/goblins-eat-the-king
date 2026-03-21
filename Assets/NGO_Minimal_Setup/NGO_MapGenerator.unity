@@ -348,7 +348,10 @@ MonoBehaviour:
   roomPrefab: {fileID: 4056034874441315933, guid: 99b611696e909984b8340da730359edf, type: 3}
   enemyPrefab: {fileID: 646927935402244903, guid: b39b805b529e5409ebb2557da3d91cc7, type: 3}
   enemiesPerRoom: 5
-  spawnCell: {x: 2, y: 5}
+  bossAnimatorController: {fileID: 9100000, guid: 6540f859199ff4e7f9eeb9d7d95a01d1, type: 2}
+  rewardBubblePrefab: {fileID: 2137881761359205907, guid: a32ff74ca24e2424e94803343d8d8dcb, type: 3}
+  levelCompletePrefab: {fileID: 7204126777611861591, guid: 64c01285fbd23384cbb6fda94ca0a066, type: 3}
+  spawnCell: {x: 2, y: 1}
 --- !u!1 &193233382
 GameObject:
   m_ObjectHideFlags: 0
@@ -799,6 +802,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4877148242254262408, guid: c9327615c086c460c93bfbfdaa4ed016, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 500
+      objectReference: {fileID: 0}
     - target: {fileID: 7170428439219867068, guid: c9327615c086c460c93bfbfdaa4ed016, type: 3}
       propertyPath: m_Name
       value: DisplayStats
@@ -3854,8 +3861,8 @@ SceneRoots:
   - {fileID: 7934394}
   - {fileID: 1756595465}
   - {fileID: 1638128146}
-  - {fileID: 1727256379}
   - {fileID: 1040755339}
+  - {fileID: 1727256379}
   - {fileID: 1382722645}
   - {fileID: 1006611243}
   - {fileID: 37849316}

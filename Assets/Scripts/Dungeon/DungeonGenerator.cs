@@ -18,6 +18,11 @@ public class DungeonGenerator : NetworkBehaviour
     [Header("Ennemis")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private int enemiesPerRoom = 10;
+    [SerializeField] private RuntimeAnimatorController bossAnimatorController;
+
+    [Header("Récompense de salle")]
+    [SerializeField] private GameObject rewardBubblePrefab;
+    [SerializeField] private GameObject levelCompletePrefab;
 
     [Header("Spawn joueur")]
     [SerializeField] private Vector2Int spawnCell = new Vector2Int(0, 2);
@@ -195,6 +200,8 @@ public class DungeonGenerator : NetworkBehaviour
             Vector3 pos = new Vector3(x * roomSize, -y * roomSize, 0f);
             var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
             go.transform.localScale = Vector3.one * 2f;
+            if (bossAnimatorController != null)
+                go.GetComponent<Animator>().runtimeAnimatorController = bossAnimatorController;
             var ec = go.GetComponent<EnemyController>();
             ec.SetRoom(x, y);
             ec.SetStats(200f, 25f);
@@ -241,15 +248,27 @@ public class DungeonGenerator : NetworkBehaviour
     }
 
     // Appelé par EnemyController quand un ennemi meurt (server only)
-    public void NotifyEnemyDied(int x, int y)
+    public void NotifyEnemyDied(int x, int y, Vector3 deathPosition)
     {
         var key = (x, y);
         if (!roomEnemyCounts.ContainsKey(key)) return;
         roomEnemyCounts[key]--;
         if (roomEnemyCounts[key] > 0) return;
 
+        roomEnemyCounts.Remove(key); // évite les double-triggers si des ennemis meurent après le clear
         roomCleared.Add(key);
         SyncRoomClearedClientRpc(x, y);
+
+        bool isBoss = grid[x, y] != null && grid[x, y].type == RoomType.Boss;
+        if (isBoss)
+        {
+            ShowLevelCompleteClientRpc();
+        }
+        else if (rewardBubblePrefab != null)
+        {
+            var bubbleGo = Instantiate(rewardBubblePrefab, deathPosition, Quaternion.identity);
+            bubbleGo.GetComponent<NetworkObject>().Spawn();
+        }
 
         // Si un joueur est déjà dans un trigger de porte, ouvre-la immédiatement
         OpenDoorIfPlayerPresent(x, y);
@@ -305,6 +324,13 @@ public class DungeonGenerator : NetworkBehaviour
     {
         roomCleared.Add((x, y));
         if (SoundManager.Instance != null) SoundManager.Instance.StopFightMusic();
+    }
+
+    [ClientRpc]
+    private void ShowLevelCompleteClientRpc()
+    {
+        if (levelCompletePrefab != null)
+            Instantiate(levelCompletePrefab);
     }
 
     // Appelé par DoorTrigger sur le client propriétaire

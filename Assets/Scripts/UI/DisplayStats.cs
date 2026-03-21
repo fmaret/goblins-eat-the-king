@@ -46,7 +46,7 @@ public class DisplayStats : MonoBehaviour
         if (statsPanel != null)
             go.transform.SetParent(statsPanel.transform, false);
         var tmp = go.AddComponent<TextMeshProUGUI>();
-        tmp.fontSize = 12;
+        tmp.fontSize = 30;
         tmp.text = stats;
     }
 }

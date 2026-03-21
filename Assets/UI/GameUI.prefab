@@ -116,8 +116,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameUI
   playerHealthBar: {fileID: 0}
+  playerManaBar: {fileID: 0}
+  playerEnduranceBar: {fileID: 0}
   playersHeaderContainer: {fileID: 4836582913449017176}
   playerInfoPrefab: {fileID: 4891635560187364487, guid: ea8aeb8751ddb489386044cb2293734a, type: 3}
+  levelCompletePrefab: {fileID: 7204126777611861591, guid: 64c01285fbd23384cbb6fda94ca0a066, type: 3}
 --- !u!1 &2159565691036230321
 GameObject:
   m_ObjectHideFlags: 0
