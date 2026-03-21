@@ -19,6 +19,9 @@ public class DungeonGenerator : NetworkBehaviour
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private int enemiesPerRoom = 10;
 
+    [Header("Récompense de salle")]
+    [SerializeField] private GameObject rewardBubblePrefab;
+
     [Header("Spawn joueur")]
     [SerializeField] private Vector2Int spawnCell = new Vector2Int(0, 2);
 
@@ -241,15 +244,23 @@ public class DungeonGenerator : NetworkBehaviour
     }
 
     // Appelé par EnemyController quand un ennemi meurt (server only)
-    public void NotifyEnemyDied(int x, int y)
+    public void NotifyEnemyDied(int x, int y, Vector3 deathPosition)
     {
         var key = (x, y);
         if (!roomEnemyCounts.ContainsKey(key)) return;
         roomEnemyCounts[key]--;
         if (roomEnemyCounts[key] > 0) return;
 
+        roomEnemyCounts.Remove(key); // évite les double-triggers si des ennemis meurent après le clear
         roomCleared.Add(key);
         SyncRoomClearedClientRpc(x, y);
+
+        // Spawn la bulle de récompense sur le dernier ennemi
+        if (rewardBubblePrefab != null)
+        {
+            var bubbleGo = Instantiate(rewardBubblePrefab, deathPosition, Quaternion.identity);
+            bubbleGo.GetComponent<NetworkObject>().Spawn();
+        }
 
         // Si un joueur est déjà dans un trigger de porte, ouvre-la immédiatement
         OpenDoorIfPlayerPresent(x, y);
