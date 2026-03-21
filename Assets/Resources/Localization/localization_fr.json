@@ -25,5 +25,10 @@
     { "key": "LUCK", "value": "Chance" },
     { "key": "VISION_RANGE", "value": "Portée de vision" },
     { "key": "RANGE", "value": "Portée" }
+    ,
+    { "key": "Play", "value": "Jouer" },
+    { "key": "Options", "value": "Options" },
+    { "key": "Upgrades", "value": "Améliorations" },
+    { "key": "Quit", "value": "Quitter" }
   ]
 }
