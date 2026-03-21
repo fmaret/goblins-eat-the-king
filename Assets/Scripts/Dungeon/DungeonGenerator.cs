@@ -1,11 +1,14 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public class DungeonGenerator : NetworkBehaviour
 {
+    public static DungeonGenerator Instance { get; private set; }
+
     [Header("Config")]
-    [SerializeField] private int gridWidth = 4;
-    [SerializeField] private int gridHeight = 4;
+    [SerializeField] private int gridWidth = 5;
+    [SerializeField] private int gridHeight = 5;
     [SerializeField] private float roomSize = 10f;
 
     [Header("Prefabs salles")]
@@ -13,6 +16,16 @@ public class DungeonGenerator : NetworkBehaviour
 
     [Header("Elements")]
     [SerializeField] private GameObject[] elementPrefabs; // piege, coffre, table
+
+    [Header("Ennemis")]
+    [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private int enemiesPerRoom = 10;
+
+    [Header("Spawn joueur")]
+    [SerializeField] private Vector2Int spawnCell = new Vector2Int(0, 2);
+
+    public float RoomSize => roomSize;
+    public Vector3 SpawnPosition => new Vector3(spawnCell.x * roomSize, -spawnCell.y * roomSize, 0);
 
     private RoomInfo bossRoom;
 
@@ -25,6 +38,19 @@ public class DungeonGenerator : NetworkBehaviour
 
     // Grille : true = salle présente
     private RoomInfo[,] grid;
+
+    // Référence aux RoomBuilders pour ouvrir les portes
+    private readonly Dictionary<(int, int), RoomBuilder> rooms = new();
+
+    // Gestion ennemis par salle (server only)
+    private readonly HashSet<(int, int)> roomEntered = new();
+    private readonly Dictionary<(int, int), int> roomEnemyCounts = new();
+    private readonly HashSet<(int, int)> roomCleared = new();
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -99,6 +125,8 @@ public class DungeonGenerator : NetworkBehaviour
 
     private void BuildDungeon()
     {
+        rooms.Clear();
+
         for (int x = 0; x < gridWidth; x++)
         {
             for (int y = 0; y <= gridHeight; y++)
@@ -110,9 +138,89 @@ public class DungeonGenerator : NetworkBehaviour
                 Vector3 pos = new Vector3(x * roomSize, -y * roomSize, 0);
                 GameObject room = Instantiate(roomPrefab, pos, Quaternion.identity);
                 room.name = y == 0 ? "Room_Boss" : $"Room_{x}_{y}";
-                room.GetComponent<RoomBuilder>().Build(grid[x, y], elementPrefabs);
+
+                var builder = room.GetComponent<RoomBuilder>();
+                builder.Build(grid[x, y], elementPrefabs);
+                rooms[(x, y)] = builder;
             }
         }
+    }
+
+    // Appelé par RoomEntranceTrigger quand un joueur entre dans la salle
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void EnterRoomServerRpc(int x, int y)
+    {
+        var key = (x, y);
+        if (roomEntered.Contains(key)) return;
+        roomEntered.Add(key);
+
+        if (enemyPrefab == null) { roomCleared.Add(key); return; }
+
+        bool isBoss = grid[x, y] != null && grid[x, y].type == RoomType.Boss;
+
+        if (isBoss)
+        {
+            // Un seul boss, scale x2
+            roomEnemyCounts[key] = 1;
+            Vector3 pos = new Vector3(x * roomSize, -y * roomSize, 0f);
+            var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
+            go.transform.localScale = Vector3.one * 2f;
+            var ec = go.GetComponent<EnemyController>();
+            ec.SetRoom(x, y);
+            ec.SetStats(200f, 25f);
+            go.GetComponent<NetworkObject>().Spawn();
+        }
+        else
+        {
+            roomEnemyCounts[key] = enemiesPerRoom;
+            for (int i = 0; i < enemiesPerRoom; i++)
+            {
+                Vector2 offset = Random.insideUnitCircle * (roomSize * 0.3f);
+                Vector3 pos = new Vector3(x * roomSize + offset.x, -y * roomSize + offset.y, 0f);
+                var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
+                var ec = go.GetComponent<EnemyController>();
+                ec.SetRoom(x, y);
+                go.GetComponent<NetworkObject>().Spawn();
+            }
+        }
+    }
+
+    // Appelé par EnemyController quand un ennemi meurt (server only)
+    public void NotifyEnemyDied(int x, int y)
+    {
+        var key = (x, y);
+        if (!roomEnemyCounts.ContainsKey(key)) return;
+        roomEnemyCounts[key]--;
+        if (roomEnemyCounts[key] <= 0)
+            roomCleared.Add(key);
+    }
+
+    // Appelé par DoorTrigger sur le client propriétaire
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void OpenDoorServerRpc(int x, int y, int direction)
+    {
+        if (!roomCleared.Contains((x, y))) return;
+        OpenDoorClientRpc(x, y, direction);
+    }
+
+    // Synchronise l'ouverture de la porte sur tous les clients (+ la porte opposée)
+    [ClientRpc]
+    private void OpenDoorClientRpc(int x, int y, int direction)
+    {
+        if (rooms.TryGetValue((x, y), out var builder))
+            builder.OpenDoor(direction);
+
+        // Ouvre aussi le côté opposé dans la salle adjacente
+        var (nx, ny, opp) = direction switch
+        {
+            0 => (x,     y - 1, 1),
+            1 => (x,     y + 1, 0),
+            2 => (x + 1, y,     3),
+            3 => (x - 1, y,     2),
+            _ => (x,     y,     direction)
+        };
+        if (rooms.TryGetValue((nx, ny), out var adjBuilder))
+            adjBuilder.OpenDoor(opp);
     }
 
     public override void OnNetworkDespawn()
