@@ -178,6 +178,13 @@ public class EnemyController : NetworkBehaviour
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void TakeDamageServerRpc(float damage)
     {
+        ApplyDamage(damage);
+    }
+
+    // Apply damage on server (callable from server-side code)
+    public void ApplyDamage(float damage)
+    {
+        if (!IsServer) return;
         hp.Value = Mathf.Max(0f, hp.Value - damage);
         // play hit animation on clients
         PlayHitClientRpc();

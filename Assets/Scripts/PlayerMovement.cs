@@ -6,6 +6,8 @@ public class PlayerMovement : NetworkBehaviour
 {
     public float moveSpeed = 3f;
     public float sprintMultiplier = 2f;
+    [Header("Stamina")]
+    public float enduranceDrainPerSecond = 15f;
     private Rigidbody2D rb;
     private Animator animator;
     private PlayerController playerController;
@@ -44,7 +46,12 @@ public class PlayerMovement : NetworkBehaviour
             else
             {
                 netMovement.Value = InputSystem.actions["Move"].ReadValue<Vector2>();
-                netIsSprinting.Value = InputSystem.actions["Sprint"].IsPressed();
+                bool wantSprint = InputSystem.actions["Sprint"].IsPressed();
+                // prevent sprint if no endurance
+                if (wantSprint && playerController != null && playerController.HasEndurance == false)
+                    netIsSprinting.Value = false;
+                else
+                    netIsSprinting.Value = wantSprint;
             }
         }
 
@@ -73,5 +80,15 @@ public class PlayerMovement : NetworkBehaviour
         if (!IsOwner || IsAttacking) return;
         float currentSpeed = moveSpeed * (netIsSprinting.Value ? sprintMultiplier : 1f);
         rb.MovePosition(rb.position + netMovement.Value * currentSpeed * Time.fixedDeltaTime);
+
+        // consume endurance while sprinting
+        if (netIsSprinting.Value && netMovement.Value != Vector2.zero && playerController != null && IsOwner)
+        {
+            float consume = enduranceDrainPerSecond * Time.fixedDeltaTime;
+            playerController.RequestConsumeEndurance(consume);
+            // if endurance drained to zero, stop sprinting locally
+            if (playerController.HasEndurance == false)
+                netIsSprinting.Value = false;
+        }
     }
 }

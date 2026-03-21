@@ -351,6 +351,7 @@ namespace Goblins.Lobby
                 SceneManager.LoadScene(gameSceneName);
                 Debug.Log("Loaded scene locally: " + gameSceneName);
             }
+            this.gameObject.SetActive(false);
         }
         
         public void UpdateUI() {

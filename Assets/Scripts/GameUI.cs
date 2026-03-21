@@ -8,6 +8,8 @@ public class GameUI : MonoBehaviour
 
 	[Header("Player UI")]
 	[SerializeField] private StatBar playerHealthBar;
+	[SerializeField] private StatBar playerManaBar;
+	[SerializeField] private StatBar playerEnduranceBar;
 	[Header("Header Players")]
 	[SerializeField] private Transform playersHeaderContainer;
 	[SerializeField] private GameObject playerInfoPrefab;
@@ -82,6 +84,18 @@ public class GameUI : MonoBehaviour
 			playerHealthBar.Set(current, max, text);
 	}
 
+	public void SetPlayerMana(float current, float max, string text = null)
+	{
+		if (playerManaBar != null)
+			playerManaBar.Set(current, max, text);
+	}
+
+	public void SetPlayerEndurance(float current, float max, string text = null)
+	{
+		if (playerEnduranceBar != null)
+			playerEnduranceBar.Set(current, max, text);
+	}
+
 	public void AddPlayerEntry(ulong clientId, string displayName)
 	{
 		if (playerInfoPrefab == null || playersHeaderContainer == null) return;
@@ -95,6 +109,8 @@ public class GameUI : MonoBehaviour
 		{
 			info.SetName(displayName);
 			info.SetHealth(1f, 1f, "");
+			info.SetMana(1f, 1f, "");
+			info.SetEndurance(1f, 1f, "");
 			playerEntries.Add(clientId, info);
 		}
 		else
@@ -120,5 +136,25 @@ public class GameUI : MonoBehaviour
 		}
 
 		if (info != null) info.SetHealth(current, max, text);
+	}
+
+	public void SetPlayerEntryMana(ulong clientId, float current, float max, string text = null)
+	{
+		if (!playerEntries.TryGetValue(clientId, out var info))
+		{
+			AddPlayerEntry(clientId, $"Player {clientId}");
+			playerEntries.TryGetValue(clientId, out info);
+		}
+		if (info != null) info.SetMana(current, max, text);
+	}
+
+	public void SetPlayerEntryEndurance(ulong clientId, float current, float max, string text = null)
+	{
+		if (!playerEntries.TryGetValue(clientId, out var info))
+		{
+			AddPlayerEntry(clientId, $"Player {clientId}");
+			playerEntries.TryGetValue(clientId, out info);
+		}
+		if (info != null) info.SetEndurance(current, max, text);
 	}
 }
