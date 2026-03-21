@@ -13,6 +13,7 @@ public class DoorPromptUI : MonoBehaviour
 
     private int _toX, _toY, _entryDir;
 
+
     private void Awake()
     {
         Instance = this;
@@ -44,6 +45,10 @@ public class DoorPromptUI : MonoBehaviour
             player.transform.position = target;
             break;
         }
+
+        // Démarre la musique de combat si la salle n'est pas encore vidée
+        if (!gen.IsRoomCleared(_toX, _toY) && SoundManager.Instance != null)
+            SoundManager.Instance.PlayFightMusic(gen.IsRoomBoss(_toX, _toY));
 
         gen.EnterRoomFromDoor(_toX, _toY, _entryDir);
     }

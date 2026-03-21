@@ -435,6 +435,7 @@ public class PlayerController : NetworkBehaviour
     {
         playerMovement.IsAttacking = true;
         netIsAttacking.Value = true;
+        if (SoundManager.Instance != null) SoundManager.Instance.PlaySwordSlice();
 
         yield return null;
         while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.5f)

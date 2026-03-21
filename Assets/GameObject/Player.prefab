@@ -164,7 +164,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   ShowTopMostFoldoutHeaderGroup: 1
-  attackDamage: 25
+  attackDamage: 100
   attackRange: 1.5
   enemyLayer:
     serializedVersion: 2
