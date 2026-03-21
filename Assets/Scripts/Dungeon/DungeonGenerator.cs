@@ -131,12 +131,9 @@ public class DungeonGenerator : NetworkBehaviour
         roomCleared.Clear();
         roomEntryDirection.Clear();
 
-        // Salle de départ : pas d'ennemis
-        if (IsServer)
-        {
-            roomEntered.Add((spawnCell.x, spawnCell.y));
-            roomCleared.Add((spawnCell.x, spawnCell.y));
-        }
+        // Salle de départ pré-cleared sur tous les clients
+        roomEntered.Add((spawnCell.x, spawnCell.y));
+        roomCleared.Add((spawnCell.x, spawnCell.y));
 
         for (int x = 0; x < gridWidth; x++)
         {
@@ -165,14 +162,8 @@ public class DungeonGenerator : NetworkBehaviour
     public void EnterRoomServerRpc(int x, int y, int entryDirection)
     {
         var key = (x, y);
-        if (roomEntered.Contains(key)) return;
-        roomEntered.Add(key);
 
-        // Mémorise la direction d'entrée (pour rouvrir les bonnes portes au clear)
-        if (entryDirection >= 0)
-            roomEntryDirection[key] = entryDirection;
-
-        // Ferme la porte derrière le joueur
+        // Ferme toujours la porte derrière le joueur (même si J2 passe après J1)
         if (entryDirection >= 0)
         {
             (int px, int py) = entryDirection switch
@@ -184,6 +175,13 @@ public class DungeonGenerator : NetworkBehaviour
             CloseDoorClientRpc(x, y, entryDirection);
             CloseDoorClientRpc(px, py, entryDirection ^ 1);
         }
+
+        if (roomEntered.Contains(key)) return;
+        roomEntered.Add(key);
+
+        // Mémorise la direction d'entrée (pour rouvrir les bonnes portes au clear)
+        if (entryDirection >= 0)
+            roomEntryDirection[key] = entryDirection;
 
         if (enemyPrefab == null) { roomCleared.Add(key); return; }
 
@@ -250,6 +248,7 @@ public class DungeonGenerator : NetworkBehaviour
         if (roomEnemyCounts[key] > 0) return;
 
         roomCleared.Add(key);
+        SyncRoomClearedClientRpc(x, y);
 
         // Si un joueur est déjà dans un trigger de porte, ouvre-la immédiatement
         OpenDoorIfPlayerPresent(x, y);
@@ -268,6 +267,8 @@ public class DungeonGenerator : NetworkBehaviour
         if (info.openWest)  CheckDoorOverlap(x, y, 3, cx - d, cy    );
     }
 
+    public bool IsRoomCleared(int x, int y) => roomCleared.Contains((x, y));
+
     private void CheckDoorOverlap(int x, int y, int dir, float doorX, float doorY)
     {
         var hits = Physics2D.OverlapBoxAll(new Vector2(doorX, doorY), new Vector2(1.5f, 1.5f), 0f);
@@ -279,6 +280,27 @@ public class DungeonGenerator : NetworkBehaviour
                 return;
             }
         }
+    }
+
+    // Appelé par DoorPromptUI (Oui) : entre dans la salle (la téléportation est faite côté client)
+    public void EnterRoomFromDoor(int toX, int toY, int entryDir)
+    {
+        EnterRoomServerRpc(toX, toY, entryDir);
+    }
+
+    // Retourne la position monde du trigger d'entrée pour une salle donnée (appelé côté client owner)
+    public Vector3 GetTriggerWorldPositionForRoom(int x, int y, int dir)
+    {
+        if (rooms.TryGetValue((x, y), out var builder))
+            return builder.GetTriggerWorldPosition(dir);
+        return new Vector3(x * roomSize, -y * roomSize, 0f);
+    }
+
+    // Synchronise l'état cleared vers tous les clients
+    [ClientRpc]
+    private void SyncRoomClearedClientRpc(int x, int y)
+    {
+        roomCleared.Add((x, y));
     }
 
     // Appelé par DoorTrigger sur le client propriétaire
