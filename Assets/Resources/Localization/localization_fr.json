@@ -1,0 +1,29 @@
+{
+  "entries": [
+    { "key": "AllPlayers", "value": "Tous les joueurs" },
+    { "key": "PlayerFormat", "value": "Joueur {0}" },
+    { "key": "TYPE_UPGRADE", "value": "Bonus" },
+    { "key": "TYPE_DOWNGRADE", "value": "Malus" },
+    { "key": "HP", "value": "PV" },
+    { "key": "MP", "value": "PM" },
+    { "key": "SPEED", "value": "Vitesse" },
+    { "key": "ATTACK", "value": "Attaque" },
+    { "key": "DEFENSE", "value": "Défense" },
+    { "key": "MAGIC_ATTACK", "value": "Attaque magique" },
+    { "key": "MAGIC_DEFENSE", "value": "Défense magique" },
+    { "key": "ATTACK_SPEED", "value": "Vitesse d'attaque" },
+    { "key": "CRITICAL_RATE", "value": "Taux critique" },
+    { "key": "CRITICAL_DAMAGE", "value": "Dégâts critiques" },
+    { "key": "LIFESTEAL", "value": "Vol de vie" },
+    { "key": "MANASTEAL", "value": "Vol de mana" },
+    { "key": "ENDURANCE", "value": "Endurance" },
+    { "key": "ENDURANCE_REGENERATION", "value": "Régénération d'endurance" },
+    { "key": "HP_REGENERATION", "value": "Régénération PV" },
+    { "key": "MP_REGENERATION", "value": "Régénération PM" },
+    { "key": "ENDURANCESTEAL", "value": "Vol d'endurance" },
+    { "key": "DODGE_RATE", "value": "Taux d'esquive" },
+    { "key": "LUCK", "value": "Chance" },
+    { "key": "VISION_RANGE", "value": "Portée de vision" },
+    { "key": "RANGE", "value": "Portée" }
+  ]
+}
