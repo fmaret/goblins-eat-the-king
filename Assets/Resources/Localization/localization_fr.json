@@ -2,8 +2,8 @@
   "entries": [
     { "key": "AllPlayers", "value": "Tous les joueurs" },
     { "key": "PlayerFormat", "value": "Joueur {0}" },
-    { "key": "TYPE_UPGRADE", "value": "Bonus" },
-    { "key": "TYPE_DOWNGRADE", "value": "Malus" },
+    { "key": "TYPE_UPGRADE", "value": "+" },
+    { "key": "TYPE_DOWNGRADE", "value": "-" },
     { "key": "HP", "value": "PV" },
     { "key": "MP", "value": "PM" },
     { "key": "SPEED", "value": "Vitesse" },

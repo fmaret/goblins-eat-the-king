@@ -30,6 +30,14 @@ public class PlayerController : NetworkBehaviour
     public float MoveSpeed => moveSpeed;
     public float SprintMultiplier => sprintMultiplier;
 
+    // Expose some stats for UI queries
+    public float CurrentHp => hp.Value;
+    public float MaxHp => maxHp;
+    public float CurrentMp => mp.Value;
+    public float MaxMp => maxMp;
+    public float CurrentEndurance => endurance.Value;
+    public float MaxEndurance => maxEndurance;
+
     [SerializeField] private StatBar healthBar;
 
     private Animator animator;
@@ -53,8 +61,31 @@ public class PlayerController : NetworkBehaviour
     }
 
     // expose endurance to other components (read-only)
-    public float CurrentEndurance => endurance.Value;
     public bool HasEndurance => endurance.Value > 0f;
+
+    // generic accessor for UI / other systems
+    public float GetStatValue(StatType stat)
+    {
+        switch (stat)
+        {
+            case StatType.HP: return CurrentHp;
+            case StatType.MP: return CurrentMp;
+            case StatType.ENDURANCE: return CurrentEndurance;
+            case StatType.HP_REGENERATION: return hpRegeneration;
+            case StatType.MP_REGENERATION: return mpRegeneration;
+            case StatType.ENDURANCE_REGENERATION: return enduranceRegeneration;
+            case StatType.SPEED: return moveSpeed;
+            case StatType.ATTACK: return attackDamage;
+            case StatType.MAGIC_ATTACK: return magicAttackDamage;
+            case StatType.DEFENSE: return defense;
+            case StatType.MAGIC_DEFENSE: return magicDefense;
+            case StatType.LIFESTEAL: return lifeSteal;
+            case StatType.MANASTEAL: return manaSteal;
+            case StatType.ENDURANCESTEAL: return enduranceSteal;
+            case StatType.RANGE: return attackRange;
+            default: return 0f;
+        }
+    }
 
     public override void OnNetworkSpawn()
     {

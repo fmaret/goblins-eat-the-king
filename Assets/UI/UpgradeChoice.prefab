@@ -181,14 +181,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.5372549}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.9019608}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 5744554968701660956, guid: 01a69d50c7396459395a422fb161233e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -393,8 +393,8 @@ MonoBehaviour:
   m_text: "Veuillez choisir une am\xE9lioration parmi les suivantes. Chaque am\xE9lioration
     a un effet positif impactant un ou plusieurs joueur(s), ainsi qu'un effet n\xE9gatif."
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
+  m_sharedMaterial: {fileID: 5871331128988609200, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -418,8 +418,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 20
-  m_fontSizeBase: 20
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -566,8 +566,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Choix de l'am\xE9lioration"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c69c51921693d4cdf80c9fa34201ed44, type: 2}
+  m_sharedMaterial: {fileID: -5950414735724384970, guid: c69c51921693d4cdf80c9fa34201ed44, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -599,7 +599,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 1024
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -1046,6 +1046,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7978422099898326655, guid: 309015327b17747a3af68abc644ddb6b, type: 3}
+      propertyPath: m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7978422099898326655, guid: 309015327b17747a3af68abc644ddb6b, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 1648501943817123133, guid: 96fe703aa6d4946f19c924192d115ffa, type: 3}
     - target: {fileID: 8299222557316959704, guid: 309015327b17747a3af68abc644ddb6b, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
