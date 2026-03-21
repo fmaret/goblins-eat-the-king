@@ -14,22 +14,15 @@ public class SwordHitbox : MonoBehaviour
         hitCollider.enabled = false; // désactivé par défaut
     }
 
-    public void EnableHitbox()
-    {
-        hitCollider.enabled = true;
-    }
-
-    public void DisableHitbox()
-    {
-        hitCollider.enabled = false;
-    }
-
     private void OnTriggerEnter2D(Collider2D other)
     {
+        Debug.Log($"[SwordHitbox] Touche : {other.name} (tag={other.tag})");
+
         var enemy = other.GetComponent<EnemyController>();
-        if (enemy != null)
-        {
-            enemy.TakeDamageServerRpc(damage);
-        }
+        if (enemy != null) { enemy.TakeDamageServerRpc(damage); return; }
+
+        var pot = other.GetComponentInParent<PotController>();
+        Debug.Log($"[SwordHitbox] PotController trouvé : {pot != null}");
+        if (pot != null) pot.TakeDamage();
     }
 }

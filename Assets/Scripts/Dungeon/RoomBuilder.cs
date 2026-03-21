@@ -17,7 +17,13 @@ public class RoomBuilder : MonoBehaviour
     [Header("Sol")]
     [SerializeField] private SpriteRenderer floor;
 
-    public void Build(RoomInfo info, GameObject[] elementPrefabs)
+    [Header("Triggers de porte (objets existants dans le prefab)")]
+    [SerializeField] private GameObject triggerNorth;
+    [SerializeField] private GameObject triggerSouth;
+    [SerializeField] private GameObject triggerEast;
+    [SerializeField] private GameObject triggerWest;
+
+    public void Build(RoomInfo info)
     {
         // Murs et ouvertures
         SetWall(wallNorth, doorNorth, info.openNorth);
@@ -25,15 +31,15 @@ public class RoomBuilder : MonoBehaviour
         SetWall(wallEast,  doorEast,  info.openEast);
         SetWall(wallWest,  doorWest,  info.openWest);
 
-        // Zones de déclenchement sur chaque porte ouverte
-        if (info.openNorth) SetupDoorTrigger(doorNorth, info.x, info.y, 0);
-        if (info.openSouth) SetupDoorTrigger(doorSouth, info.x, info.y, 1);
-        if (info.openEast)  SetupDoorTrigger(doorEast,  info.x, info.y, 2);
-        if (info.openWest)  SetupDoorTrigger(doorWest,  info.x, info.y, 3);
+        // Configure DoorTrigger sur les objets trigger existants du prefab
+        if (info.openNorth) SetupDoorTrigger(triggerNorth, info.x, info.y, 0);
+        if (info.openSouth) SetupDoorTrigger(triggerSouth, info.x, info.y, 1);
+        if (info.openEast)  SetupDoorTrigger(triggerEast,  info.x, info.y, 2);
+        if (info.openWest)  SetupDoorTrigger(triggerWest,  info.x, info.y, 3);
 
         // Zone de détection d'entrée dans la salle (spawn ennemis)
         float triggerSize = DungeonGenerator.Instance != null
-            ? DungeonGenerator.Instance.RoomSize * 0.4f
+            ? DungeonGenerator.Instance.RoomSize * 0.2f
             : 4f;
         var entranceGO = new GameObject("RoomEntranceTrigger");
         entranceGO.transform.SetParent(transform, false);
@@ -49,26 +55,16 @@ public class RoomBuilder : MonoBehaviour
         {
             floor.color = info.type == RoomType.Boss
                 ? new Color(0.6f, 0.1f, 0.1f) // rouge foncé pour le boss
-                : new Color(0.3f, 0.3f, 0.35f); // gris pour les salles normales
+                : new Color(1f, 1f, 1f); // gris pour les salles normales
         }
 
-        // Spawn éléments aléatoires
-        if (elementPrefabs != null && elementPrefabs.Length > 0)
+        // Décor et interactables
+        if (TryGetComponent<RoomFurnisher>(out var furnisher))
         {
-            int count = Random.Range(1, 4);
-            for (int i = 0; i < count; i++)
-            {
-                GameObject prefab = elementPrefabs[Random.Range(0, elementPrefabs.Length)];
-
-                // Position aléatoire dans la salle (évite les bords)
-                Vector2 offset = new Vector2(
-                    Random.Range(-3.5f, 3.5f),
-                    Random.Range(-3.5f, 3.5f)
-                );
-
-                Instantiate(prefab, transform.position + (Vector3)offset, Quaternion.identity, transform);
-            }
+            var gen = DungeonGenerator.Instance;
+            furnisher.Furnish(info, gen != null ? gen.RoomSize : 10f, gen != null ? gen.DungeonSeed : 0);
         }
+
     }
 
     private void SetWall(GameObject wall, GameObject door, bool isOpen)
@@ -77,22 +73,29 @@ public class RoomBuilder : MonoBehaviour
         if (door != null) door.SetActive(isOpen);
     }
 
-    // Crée une zone trigger enfant sur la porte pour détecter le joueur
-    private void SetupDoorTrigger(GameObject door, int x, int y, int dir)
+    // Configure DoorTrigger sur un objet trigger existant du prefab (pas de création d'enfant)
+    private void SetupDoorTrigger(GameObject triggerObj, int x, int y, int dir)
     {
-        if (door == null) return;
-
-        var triggerGO = new GameObject("DoorTriggerZone");
-        triggerGO.transform.SetParent(door.transform, false);
-
-        var col = triggerGO.AddComponent<BoxCollider2D>();
-        col.isTrigger = true;
-        col.size = new Vector2(1f, 1f);
-
-        var dt = triggerGO.AddComponent<DoorTrigger>();
-        dt.roomX = x;
-        dt.roomY = y;
+        if (triggerObj == null) return;
+        var dt = triggerObj.GetComponent<DoorTrigger>();
+        if (dt == null) dt = triggerObj.AddComponent<DoorTrigger>();
+        dt.roomX    = x;
+        dt.roomY    = y;
         dt.direction = dir;
+    }
+
+    // Retourne la position monde du trigger d'entrée pour ce côté
+    public Vector3 GetTriggerWorldPosition(int direction)
+    {
+        GameObject t = direction switch
+        {
+            0 => triggerNorth, 1 => triggerSouth,
+            2 => triggerEast,  3 => triggerWest,
+            _ => null
+        };
+        if (t == null) return transform.position;
+        var col = t.GetComponent<BoxCollider2D>();
+        return col != null ? col.bounds.center : t.transform.position;
     }
 
     // Appelé par DungeonGenerator pour ouvrir une porte (0=N 1=S 2=E 3=W)
@@ -107,5 +110,17 @@ public class RoomBuilder : MonoBehaviour
             _ => null
         };
         if (door != null) door.SetActive(false);
+    }
+
+    // Referme la porte derrière le joueur (porte visible, mur caché)
+    public void CloseDoor(int direction)
+    {
+        switch (direction)
+        {
+            case 0: if (wallNorth != null) wallNorth.SetActive(false); if (doorNorth != null) doorNorth.SetActive(true); break;
+            case 1: if (wallSouth != null) wallSouth.SetActive(false); if (doorSouth != null) doorSouth.SetActive(true); break;
+            case 2: if (wallEast  != null) wallEast .SetActive(false); if (doorEast  != null) doorEast .SetActive(true); break;
+            case 3: if (wallWest  != null) wallWest .SetActive(false); if (doorWest  != null) doorWest .SetActive(true); break;
+        }
     }
 }
