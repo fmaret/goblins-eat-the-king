@@ -12,6 +12,7 @@ public class ChestController : MonoBehaviour
     private int roomX, roomY;
     private bool opened;
 
+
     public void Init(int x, int y) { roomX = x; roomY = y; }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -26,6 +27,7 @@ public class ChestController : MonoBehaviour
     {
         if (opened) return;
         opened = true;
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayChestOpen();
 
         var sr = GetComponent<SpriteRenderer>();
         if (openSprite != null && sr != null)

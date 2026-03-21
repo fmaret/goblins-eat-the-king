@@ -46,6 +46,7 @@ public class DungeonGenerator : NetworkBehaviour
     private readonly HashSet<(int, int)> roomCleared = new();
     private readonly Dictionary<(int, int), int> roomEntryDirection = new(); // direction d'entrée par salle
 
+
     private void Awake()
     {
         Instance = this;
@@ -269,6 +270,8 @@ public class DungeonGenerator : NetworkBehaviour
 
     public bool IsRoomCleared(int x, int y) => roomCleared.Contains((x, y));
 
+    public bool IsRoomBoss(int x, int y) => grid != null && grid[x, y] != null && grid[x, y].type == RoomType.Boss;
+
     private void CheckDoorOverlap(int x, int y, int dir, float doorX, float doorY)
     {
         var hits = Physics2D.OverlapBoxAll(new Vector2(doorX, doorY), new Vector2(1.5f, 1.5f), 0f);
@@ -301,6 +304,7 @@ public class DungeonGenerator : NetworkBehaviour
     private void SyncRoomClearedClientRpc(int x, int y)
     {
         roomCleared.Add((x, y));
+        if (SoundManager.Instance != null) SoundManager.Instance.StopFightMusic();
     }
 
     // Appelé par DoorTrigger sur le client propriétaire
@@ -315,6 +319,7 @@ public class DungeonGenerator : NetworkBehaviour
     [ClientRpc]
     private void OpenDoorClientRpc(int x, int y, int direction)
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayDoorOpen();
         if (rooms.TryGetValue((x, y), out var builder))
             builder.OpenDoor(direction);
 

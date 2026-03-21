@@ -10,6 +10,7 @@ public class PotController : MonoBehaviour
     private int roomX, roomY, potIndex;
     private bool broken;
 
+
     public void Init(int x, int y, int index)
     {
         roomX    = x;
@@ -29,6 +30,7 @@ public class PotController : MonoBehaviour
     {
         if (broken) return;
         broken = true;
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayPotBreak();
 
         // Spawn des pièces localement (même résultat sur tous les clients)
         for (int i = 0; i < coinCount; i++)
