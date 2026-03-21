@@ -33,7 +33,7 @@ public class RoomBuilder : MonoBehaviour
 
         // Zone de détection d'entrée dans la salle (spawn ennemis)
         float triggerSize = DungeonGenerator.Instance != null
-            ? DungeonGenerator.Instance.RoomSize * 0.4f
+            ? DungeonGenerator.Instance.RoomSize * 0.2f
             : 4f;
         var entranceGO = new GameObject("RoomEntranceTrigger");
         entranceGO.transform.SetParent(transform, false);
@@ -52,7 +52,11 @@ public class RoomBuilder : MonoBehaviour
                 : new Color(0.3f, 0.3f, 0.35f); // gris pour les salles normales
         }
 
-        // Spawn éléments aléatoires
+        // Décor et interactables
+        if (TryGetComponent<RoomFurnisher>(out var furnisher))
+            furnisher.Furnish(info, DungeonGenerator.Instance != null ? DungeonGenerator.Instance.RoomSize : 10f);
+
+        // Spawn éléments aléatoires (legacy)
         if (elementPrefabs != null && elementPrefabs.Length > 0)
         {
             int count = Random.Range(1, 4);

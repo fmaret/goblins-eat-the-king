@@ -976,6 +976,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8984402541196399337}
   - component: {fileID: 8390140727099956487}
+  - component: {fileID: 8447743999222133791}
   m_Layer: 0
   m_Name: Room 1
   m_TagString: Untagged
@@ -1036,6 +1037,22 @@ MonoBehaviour:
   doorEast: {fileID: 6000356836776558559}
   doorWest: {fileID: 4494404268171346687}
   floor: {fileID: 2649415025664002951}
+--- !u!114 &8447743999222133791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4056034874441315933}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2720a32cec29b0b4c85bb49a0ba0c044, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomFurnisher
+  pillarPrefab: {fileID: 5164857234824653866, guid: d33e472903ac59d48806ea73a56bf0c9, type: 3}
+  benchPrefab: {fileID: 2850530732170684450, guid: e87ec656e8f48fe4fbe643574a8a1336, type: 3}
+  potPrefab: {fileID: 6165931358308041258, guid: 88e23e038c0c5244da091a5b358fabea, type: 3}
+  chestPrefab: {fileID: 7869530271838660559, guid: 1a6ded464e95aff41a54cdb007cac5c6, type: 3}
 --- !u!1 &4159350845996375132
 GameObject:
   m_ObjectHideFlags: 0

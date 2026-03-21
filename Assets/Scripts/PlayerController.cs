@@ -150,19 +150,20 @@ public class PlayerController : NetworkBehaviour
             animator.GetFloat("LastInputY")
         ).normalized;
 
-        int layerMask = enemyLayer == 0 ? ~0 : (int)enemyLayer;
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attackRange, layerMask);
         DrawDebugCircle(transform.position, attackRange, Color.red, 1f);
         Debug.DrawRay(transform.position, dir * attackRange, Color.yellow, 1f);
 
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attackRange);
         foreach (var hit in hits)
         {
-            Vector2 toEnemy = ((Vector2)hit.transform.position - (Vector2)transform.position).normalized;
-            if (Vector2.Dot(dir, toEnemy) > 0.3f)
+            Vector2 toTarget = ((Vector2)hit.transform.position - (Vector2)transform.position).normalized;
+            if (Vector2.Dot(dir, toTarget) > 0.3f)
             {
                 var enemy = hit.GetComponent<EnemyController>();
-                if (enemy != null)
-                    enemy.TakeDamageServerRpc(attackDamage);
+                if (enemy != null) { enemy.TakeDamageServerRpc(attackDamage); continue; }
+
+                var pot = hit.GetComponentInParent<PotController>();
+                if (pot != null) pot.TakeDamage();
             }
         }
 

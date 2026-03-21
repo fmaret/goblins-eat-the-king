@@ -40,7 +40,8 @@ public class DungeonGenerator : NetworkBehaviour
     private RoomInfo[,] grid;
 
     // Référence aux RoomBuilders pour ouvrir les portes
-    private readonly Dictionary<(int, int), RoomBuilder> rooms = new();
+    private readonly Dictionary<(int, int), RoomBuilder>  rooms      = new();
+    private readonly Dictionary<(int, int), RoomFurnisher> furnishers = new();
 
     // Gestion ennemis par salle (server only)
     private readonly HashSet<(int, int)> roomEntered = new();
@@ -126,6 +127,7 @@ public class DungeonGenerator : NetworkBehaviour
     private void BuildDungeon()
     {
         rooms.Clear();
+        furnishers.Clear();
 
         for (int x = 0; x < gridWidth; x++)
         {
@@ -142,6 +144,8 @@ public class DungeonGenerator : NetworkBehaviour
                 var builder = room.GetComponent<RoomBuilder>();
                 builder.Build(grid[x, y], elementPrefabs);
                 rooms[(x, y)] = builder;
+                if (room.TryGetComponent<RoomFurnisher>(out var furnisher))
+                    furnishers[(x, y)] = furnisher;
             }
         }
     }
@@ -221,6 +225,32 @@ public class DungeonGenerator : NetworkBehaviour
         };
         if (rooms.TryGetValue((nx, ny), out var adjBuilder))
             adjBuilder.OpenDoor(opp);
+    }
+
+    // --- Pots ---
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void BreakPotServerRpc(int roomX, int roomY, int potIndex)
+        => BreakPotClientRpc(roomX, roomY, potIndex);
+
+    [ClientRpc]
+    private void BreakPotClientRpc(int roomX, int roomY, int potIndex)
+    {
+        if (furnishers.TryGetValue((roomX, roomY), out var f))
+            f.BreakPot(potIndex);
+    }
+
+    // --- Coffres ---
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void OpenChestServerRpc(int roomX, int roomY)
+        => OpenChestClientRpc(roomX, roomY);
+
+    [ClientRpc]
+    private void OpenChestClientRpc(int roomX, int roomY)
+    {
+        if (furnishers.TryGetValue((roomX, roomY), out var f))
+            f.OpenChest();
     }
 
     public override void OnNetworkDespawn()
