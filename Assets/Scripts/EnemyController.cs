@@ -28,6 +28,7 @@ public class EnemyController : NetworkBehaviour
 
     [HideInInspector] public int roomX = -1, roomY = -1;
     public void SetRoom(int x, int y) { roomX = x; roomY = y; }
+    public void SetStats(float hp, float damage) { maxHp = hp; attackDamage = damage; }
 
     private EnemyMovement enemyMovement;
     private Animator animator;

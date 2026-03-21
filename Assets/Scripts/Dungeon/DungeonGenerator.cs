@@ -154,22 +154,34 @@ public class DungeonGenerator : NetworkBehaviour
         if (roomEntered.Contains(key)) return;
         roomEntered.Add(key);
 
-        // Salle boss ou pas d'ennemi prefab → considérée comme cleared
-        if (enemyPrefab == null || (grid[x, y] != null && grid[x, y].type == RoomType.Boss))
-        {
-            roomCleared.Add(key);
-            return;
-        }
+        if (enemyPrefab == null) { roomCleared.Add(key); return; }
 
-        roomEnemyCounts[key] = enemiesPerRoom;
-        for (int i = 0; i < enemiesPerRoom; i++)
+        bool isBoss = grid[x, y] != null && grid[x, y].type == RoomType.Boss;
+
+        if (isBoss)
         {
-            Vector2 offset = Random.insideUnitCircle * (roomSize * 0.3f);
-            Vector3 pos = new Vector3(x * roomSize + offset.x, -y * roomSize + offset.y, 0f);
+            // Un seul boss, scale x2
+            roomEnemyCounts[key] = 1;
+            Vector3 pos = new Vector3(x * roomSize, -y * roomSize, 0f);
             var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
+            go.transform.localScale = Vector3.one * 2f;
             var ec = go.GetComponent<EnemyController>();
             ec.SetRoom(x, y);
+            ec.SetStats(200f, 25f);
             go.GetComponent<NetworkObject>().Spawn();
+        }
+        else
+        {
+            roomEnemyCounts[key] = enemiesPerRoom;
+            for (int i = 0; i < enemiesPerRoom; i++)
+            {
+                Vector2 offset = Random.insideUnitCircle * (roomSize * 0.3f);
+                Vector3 pos = new Vector3(x * roomSize + offset.x, -y * roomSize + offset.y, 0f);
+                var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
+                var ec = go.GetComponent<EnemyController>();
+                ec.SetRoom(x, y);
+                go.GetComponent<NetworkObject>().Spawn();
+            }
         }
     }
 
@@ -177,13 +189,8 @@ public class DungeonGenerator : NetworkBehaviour
     public void NotifyEnemyDied(int x, int y)
     {
         var key = (x, y);
-        if (!roomEnemyCounts.ContainsKey(key))
-        {
-            Debug.LogWarning($"[NotifyEnemyDied] Salle ({x},{y}) inconnue — roomX/roomY mal assignés ?");
-            return;
-        }
+        if (!roomEnemyCounts.ContainsKey(key)) return;
         roomEnemyCounts[key]--;
-        Debug.Log($"[NotifyEnemyDied] Salle ({x},{y}) → {roomEnemyCounts[key]} ennemis restants");
         if (roomEnemyCounts[key] <= 0)
             roomCleared.Add(key);
     }
@@ -192,9 +199,6 @@ public class DungeonGenerator : NetworkBehaviour
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void OpenDoorServerRpc(int x, int y, int direction)
     {
-        // Bloqué si des ennemis sont encore en vie dans cette salle
-        int remaining = roomEnemyCounts.TryGetValue((x, y), out int c) ? c : -1;
-        Debug.Log($"[OpenDoor] Salle ({x},{y}) dir={direction} cleared={roomCleared.Contains((x,y))} remaining={remaining}");
         if (!roomCleared.Contains((x, y))) return;
         OpenDoorClientRpc(x, y, direction);
     }
