@@ -348,8 +348,10 @@ MonoBehaviour:
   roomPrefab: {fileID: 4056034874441315933, guid: 99b611696e909984b8340da730359edf, type: 3}
   enemyPrefab: {fileID: 646927935402244903, guid: b39b805b529e5409ebb2557da3d91cc7, type: 3}
   enemiesPerRoom: 5
+  bossAnimatorController: {fileID: 9100000, guid: 6540f859199ff4e7f9eeb9d7d95a01d1, type: 2}
   rewardBubblePrefab: {fileID: 2137881761359205907, guid: a32ff74ca24e2424e94803343d8d8dcb, type: 3}
-  spawnCell: {x: 2, y: 5}
+  levelCompletePrefab: {fileID: 7204126777611861591, guid: 64c01285fbd23384cbb6fda94ca0a066, type: 3}
+  spawnCell: {x: 2, y: 1}
 --- !u!1 &193233382
 GameObject:
   m_ObjectHideFlags: 0

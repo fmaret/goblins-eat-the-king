@@ -18,9 +18,11 @@ public class DungeonGenerator : NetworkBehaviour
     [Header("Ennemis")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private int enemiesPerRoom = 10;
+    [SerializeField] private RuntimeAnimatorController bossAnimatorController;
 
     [Header("Récompense de salle")]
     [SerializeField] private GameObject rewardBubblePrefab;
+    [SerializeField] private GameObject levelCompletePrefab;
 
     [Header("Spawn joueur")]
     [SerializeField] private Vector2Int spawnCell = new Vector2Int(0, 2);
@@ -198,6 +200,8 @@ public class DungeonGenerator : NetworkBehaviour
             Vector3 pos = new Vector3(x * roomSize, -y * roomSize, 0f);
             var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
             go.transform.localScale = Vector3.one * 2f;
+            if (bossAnimatorController != null)
+                go.GetComponent<Animator>().runtimeAnimatorController = bossAnimatorController;
             var ec = go.GetComponent<EnemyController>();
             ec.SetRoom(x, y);
             ec.SetStats(200f, 25f);
@@ -255,8 +259,12 @@ public class DungeonGenerator : NetworkBehaviour
         roomCleared.Add(key);
         SyncRoomClearedClientRpc(x, y);
 
-        // Spawn la bulle de récompense sur le dernier ennemi
-        if (rewardBubblePrefab != null)
+        bool isBoss = grid[x, y] != null && grid[x, y].type == RoomType.Boss;
+        if (isBoss)
+        {
+            ShowLevelCompleteClientRpc();
+        }
+        else if (rewardBubblePrefab != null)
         {
             var bubbleGo = Instantiate(rewardBubblePrefab, deathPosition, Quaternion.identity);
             bubbleGo.GetComponent<NetworkObject>().Spawn();
@@ -316,6 +324,13 @@ public class DungeonGenerator : NetworkBehaviour
     {
         roomCleared.Add((x, y));
         if (SoundManager.Instance != null) SoundManager.Instance.StopFightMusic();
+    }
+
+    [ClientRpc]
+    private void ShowLevelCompleteClientRpc()
+    {
+        if (levelCompletePrefab != null)
+            Instantiate(levelCompletePrefab);
     }
 
     // Appelé par DoorTrigger sur le client propriétaire

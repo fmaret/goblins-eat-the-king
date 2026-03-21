@@ -14,7 +14,7 @@ public class GameUI : MonoBehaviour
 	[SerializeField] private Transform playersHeaderContainer;
 	[SerializeField] private GameObject playerInfoPrefab;
 
-	private Dictionary<ulong, PlayerInfo> playerEntries = new Dictionary<ulong, PlayerInfo>();
+private Dictionary<ulong, PlayerInfo> playerEntries = new Dictionary<ulong, PlayerInfo>();
 
 	void Awake()
 	{
@@ -78,7 +78,7 @@ public class GameUI : MonoBehaviour
 		RemovePlayerEntry(clientId);
 	}
 
-	public void SetPlayerHealth(float current, float max, string text = null)
+public void SetPlayerHealth(float current, float max, string text = null)
 	{
 		if (playerHealthBar != null)
 			playerHealthBar.Set(current, max, text);
