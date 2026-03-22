@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Goblins.Lobby;
+using UnityEngine.InputSystem;
 
 public class JoinModalController : MonoBehaviour
 {
@@ -10,9 +11,12 @@ public class JoinModalController : MonoBehaviour
     public TextMeshProUGUI colorLabel;
     public Button validateButton;
     public GameObject lobbyPanel; // assign or find
+    public TextMeshProUGUI messageLabel; // optional: show errors here (set red in inspector)
 
     private int colorIndex = 0;
     private Color[] colors = new Color[] { Color.white, Color.red, Color.blue, Color.green };
+    private InputAction submitAction;
+    private bool panelActivatedByThis = false;
 
     void Start()
     {
@@ -34,6 +38,13 @@ public class JoinModalController : MonoBehaviour
                 }
             }
         }
+
+        if (messageLabel != null) messageLabel.text = "";
+
+        // Input System: trigger validate on Enter when input is focused
+        submitAction = new InputAction(type: InputActionType.Button, binding: "<Keyboard>/enter");
+        submitAction.performed += OnSubmitAction;
+        submitAction.Enable();
     }
 
     void CycleColor()
@@ -50,12 +61,13 @@ public class JoinModalController : MonoBehaviour
     async void OnValidate()
     {
         if (codeInput == null) return;
+        if (messageLabel != null) messageLabel.text = "";
         var code = codeInput.text.Trim();
         if (string.IsNullOrEmpty(code)) return;
 
         bool ok = false;
         // Activer le panel AVANT StartClient pour que NGO puisse trouver les NetworkObjects in-scene
-        if (lobbyPanel != null) lobbyPanel.SetActive(true);
+        if (lobbyPanel != null) { lobbyPanel.SetActive(true); panelActivatedByThis = true; }
 
         // prefer Relay if LobbyManager is configured for it
         if (LobbyManager.Instance != null && LobbyManager.Instance.useRelay)
@@ -93,11 +105,35 @@ public class JoinModalController : MonoBehaviour
         if (ok)
         {
             this.gameObject.SetActive(false);
+            if (messageLabel != null) messageLabel.text = "";
             // lobbyPanel est déjà actif (activé avant StartClient)
         }
         else
         {
             Debug.LogWarning("JoinModal: failed to join lobby (code mismatch or no lobby)");
+            // disable lobby panel if we activated it here to avoid showing an empty lobby
+            if (panelActivatedByThis && lobbyPanel != null) lobbyPanel.SetActive(false);
+            if (messageLabel != null) messageLabel.text = "Salle introuvable ou code invalide.";
+        }
+    }
+
+    private void OnSubmitAction(InputAction.CallbackContext ctx)
+    {
+        if (!this.gameObject.activeInHierarchy) return;
+        if (codeInput != null && codeInput.isFocused)
+        {
+            OnValidate();
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (submitAction != null)
+        {
+            submitAction.performed -= OnSubmitAction;
+            submitAction.Disable();
+            submitAction.Dispose();
+            submitAction = null;
         }
     }
 }
