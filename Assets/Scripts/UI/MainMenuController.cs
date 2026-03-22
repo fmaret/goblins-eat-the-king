@@ -16,6 +16,7 @@ public class MainMenuController : MonoBehaviour
 
     public GameObject optionsPanel;
     public GameObject playButtonsGroup; // should be placed to the right of Play button in scene
+    public GameObject upgradesPanel; // assign your UpgradesPanel here
     public GameObject lobbyPanel; // optional: assign your Lobby panel here
     public GameObject joinModal; // optional: assign your Join modal here
 
@@ -63,6 +64,7 @@ public class MainMenuController : MonoBehaviour
         if (playButtonsGroup != null) playButtonsGroup.SetActive(false);
         if (lobbyPanel != null) lobbyPanel.SetActive(false);
         if (joinModal != null) joinModal.SetActive(false);
+        if (upgradesPanel != null) upgradesPanel.SetActive(false);
     }
 
     Button FindButton(string name)
@@ -159,40 +161,8 @@ public class MainMenuController : MonoBehaviour
 
     void OnUpgradesClicked()
     {
-        var ucType = Type.GetType("UpgradeChoice");
-        if (ucType != null)
-        {
-            // try to access singleton
-            try
-            {
-                var prop = ucType.GetProperty("Instance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-                var inst = prop?.GetValue(null);
-                if (inst != null)
-                {
-                    var setActive = ucType.GetMethod("SetActive");
-                    var gen = ucType.GetMethod("GenerateNewChoices");
-                    setActive?.Invoke(inst, new object[] { true });
-                    gen?.Invoke(inst, null);
-                    return;
-                }
-            }
-            catch { }
-        }
-        // fallback: try GameObject.Find
-        var go = GameObject.Find("UpgradeChoice");
-        if (go != null)
-        {
-            go.SetActive(true);
-            var comp = go.GetComponentInChildren<UnityEngine.MonoBehaviour>();
-            if (comp != null)
-            {
-                var m = comp.GetType().GetMethod("GenerateNewChoices");
-                m?.Invoke(comp, null);
-            }
-            return;
-        }
-
-        Debug.LogWarning("MainMenu: UpgradeChoice not found");
+        if (upgradesPanel != null)
+            upgradesPanel.SetActive(!upgradesPanel.activeSelf);
     }
 
     void OnQuitClicked()
