@@ -1442,6 +1442,10 @@ PrefabInstance:
       propertyPath: joinModal
       value: 
       objectReference: {fileID: 1028614407}
+    - target: {fileID: 6357304465850380777, guid: 48b2ffde6bc3d4bd79b753cdc1083c6c, type: 3}
+      propertyPath: lobbyPanel
+      value: 
+      objectReference: {fileID: 861744668}
     - target: {fileID: 6988916730916554555, guid: 48b2ffde6bc3d4bd79b753cdc1083c6c, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
