@@ -60,6 +60,7 @@ public class RoomFurnisher : MonoBehaviour
         if (go == null) return;
         chest = go.GetComponent<ChestController>();
         chest?.Init(info.x, info.y);
+        DungeonGenerator.Instance?.RegisterChestRoom(info.x, info.y);
     }
 
     private void PlaceBench(System.Random rng, float range)

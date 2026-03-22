@@ -10,6 +10,7 @@ public class PlayerColor : NetworkBehaviour
     );
 
     public Color basePlayerColor;
+    public Color GetColor() => playerColor.Value;
 
     public override void OnNetworkSpawn()
     {
