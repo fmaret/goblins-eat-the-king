@@ -377,6 +377,18 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -8407567668883137275, guid: ac0720f8995c94edca1e92d91249d5b4, type: 3}
+    - target: {fileID: 3067723310364939769, guid: 0f9744d38238b4ed6a3da39d26d4549a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.00000042317515
+      objectReference: {fileID: 0}
+    - target: {fileID: 3067723310364939769, guid: 0f9744d38238b4ed6a3da39d26d4549a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.00005722046
+      objectReference: {fileID: 0}
+    - target: {fileID: 3067723310364939769, guid: 0f9744d38238b4ed6a3da39d26d4549a, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.0000076293945
+      objectReference: {fileID: 0}
     - target: {fileID: 4355337416559049616, guid: 0f9744d38238b4ed6a3da39d26d4549a, type: 3}
       propertyPath: m_Name
       value: StatLineDef
