@@ -31,6 +31,7 @@ public class CoinPickup : MonoBehaviour
             if (Vector2.Distance(transform.position, target.position) <= collectRadius)
             {
                 if (SoundManager.Instance != null) SoundManager.Instance.PlayCoinPickup();
+                if (CoinManager.Instance != null) CoinManager.Instance.AddCoin();
                 gameObject.SetActive(false);
             }
         }
