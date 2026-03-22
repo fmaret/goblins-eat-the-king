@@ -105,15 +105,18 @@ public class DungeonGenerator : NetworkBehaviour
         var placed   = new HashSet<(int, int)>();
         var frontier = new List<(int, int)>();
 
-        placed.Add((spawnCell.x, spawnCell.y));
-        frontier.Add((spawnCell.x, spawnCell.y));
+        int startX = gridWidth / 2;
+        int startY = (gridHeight + 1) / 2;
+        placed.Add((startX, startY));
+        frontier.Add((startX, startY));
 
         int[] dx = {  0,  0, 1, -1 };
         int[] dy = { -1,  1, 0,  0 };
 
         while (placed.Count < targetRoomCount && frontier.Count > 0)
         {
-            int fi = rng.Next(frontier.Count);
+            // Mix newest/random pour des formes plus variées
+            int fi = rng.Next(2) == 0 ? frontier.Count - 1 : rng.Next(frontier.Count);
             var (fx, fy) = frontier[fi];
 
             int[] dirs = { 0, 1, 2, 3 };
@@ -134,39 +137,84 @@ public class DungeonGenerator : NetworkBehaviour
             if (!expanded) frontier.RemoveAt(fi);
         }
 
-        // ── 2. Crée les RoomInfo avec portes selon adjacence réelle ──────────
+        // ── 2. RoomInfo avec portes selon adjacence réelle ───────────────────
         foreach (var (x, y) in placed)
         {
             grid[x, y] = new RoomInfo
             {
                 x = x, y = y, type = RoomType.Normal,
-                openNorth = y > 1 && placed.Contains((x, y - 1)),
+                openNorth = placed.Contains((x, y - 1)),
                 openSouth = placed.Contains((x, y + 1)),
                 openEast  = placed.Contains((x + 1, y)),
                 openWest  = placed.Contains((x - 1, y)),
             };
         }
 
-        // ── 3. Salle boss au-dessus de la salle la plus haute ────────────────
-        int minY = int.MaxValue;
-        foreach (var (_, y) in placed) if (y < minY) minY = y;
-
-        var topCols = new List<int>();
-        foreach (var (x, y) in placed) if (y == minY) topCols.Add(x);
-        int bossX = topCols[rng.Next(topCols.Count)];
-        int bossY = minY - 1;
-
-        grid[bossX, bossY] = new RoomInfo
+        // ── 3. Boss : dead-end aléatoire ─────────────────────────────────────
+        var deadEnds = new List<(int, int)>();
+        foreach (var (x, y) in placed)
         {
-            x = bossX, y = bossY, type = RoomType.Boss,
-            openNorth = false, openSouth = true, openEast = false, openWest = false
-        };
-        grid[bossX, minY].openNorth = true;
+            int n = 0;
+            if (placed.Contains((x, y - 1))) n++;
+            if (placed.Contains((x, y + 1))) n++;
+            if (placed.Contains((x + 1, y))) n++;
+            if (placed.Contains((x - 1, y))) n++;
+            if (n == 1) deadEnds.Add((x, y));
+        }
+        for (int i = deadEnds.Count - 1; i > 0; i--)
+        { int j = rng.Next(i + 1); (deadEnds[i], deadEnds[j]) = (deadEnds[j], deadEnds[i]); }
+
+        var (bossX, bossY) = deadEnds[0];
+        grid[bossX, bossY].type = RoomType.Boss;
+
+        // ── 4. Spawn : BFS depuis boss, distance >= targetRoomCount / 5 ──────
+        int minDist   = Mathf.Max(1, targetRoomCount / 5);
+        var distances = BfsDistances(placed, (bossX, bossY));
+
+        var candidates = new List<(int, int)>();
+        foreach (var ((cx, cy), d) in distances)
+            if (d >= minDist && grid[cx, cy].type != RoomType.Boss)
+                candidates.Add((cx, cy));
+
+        if (candidates.Count == 0)
+        {
+            int maxD = 0;
+            foreach (var (_, d) in distances) if (d > maxD) maxD = d;
+            foreach (var ((cx, cy), d) in distances) if (d == maxD) candidates.Add((cx, cy));
+        }
+        for (int i = candidates.Count - 1; i > 0; i--)
+        { int j = rng.Next(i + 1); (candidates[i], candidates[j]) = (candidates[j], candidates[i]); }
+
+        var chosen = candidates[rng.Next(candidates.Count)];
+        spawnCell  = new Vector2Int(chosen.Item1, chosen.Item2);
 
         BuildDungeon();
 
         if (IsServer)
             TeleportPlayersToSpawnClientRpc();
+    }
+
+    private static Dictionary<(int, int), int> BfsDistances(HashSet<(int, int)> placed, (int, int) start)
+    {
+        var dist  = new Dictionary<(int, int), int> { [start] = 0 };
+        var queue = new Queue<(int, int)>();
+        queue.Enqueue(start);
+
+        (int ddx, int ddy)[] dirs = { (0, -1), (0, 1), (1, 0), (-1, 0) };
+        while (queue.Count > 0)
+        {
+            var (x, y) = queue.Dequeue();
+            foreach (var (ddx, ddy) in dirs)
+            {
+                var next = (x + ddx, y + ddy);
+                if (placed.Contains(next) && !dist.ContainsKey(next))
+                {
+                    dist[next] = dist[(x, y)] + 1;
+                    queue.Enqueue(next);
+                }
+            }
+        }
+        return dist;
     }
 
     [ClientRpc]
