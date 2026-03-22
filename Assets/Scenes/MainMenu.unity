@@ -351,6 +351,18 @@ PrefabInstance:
       propertyPath: gameSceneName
       value: NGO_MapGenerator
       objectReference: {fileID: 0}
+    - target: {fileID: -1258685253700441643, guid: 82cb028a256aa43c591934e47bdf8243, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1043375928
+      objectReference: {fileID: 0}
+    - target: {fileID: -1258685253700441643, guid: 82cb028a256aa43c591934e47bdf8243, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1258685253700441643, guid: 82cb028a256aa43c591934e47bdf8243, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 2112013596
+      objectReference: {fileID: 0}
     - target: {fileID: 349349049028499343, guid: 82cb028a256aa43c591934e47bdf8243, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
