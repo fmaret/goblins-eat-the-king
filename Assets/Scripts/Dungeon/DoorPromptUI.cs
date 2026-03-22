@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 // Attacher sur un GameObject avec un Canvas en Screen Space.
 // Requiert un Panel enfant avec deux boutons (Oui / Non).
@@ -10,6 +11,8 @@ public class DoorPromptUI : MonoBehaviour
     [SerializeField] private GameObject panel;
     [SerializeField] private Button yesButton;
     [SerializeField] private Button noButton;
+    [Tooltip("Optional: assign the Input System 'Interact' action here (InputActionReference)")]
+    public InputActionReference interactAction;
 
     private int _toX, _toY, _entryDir;
 
@@ -20,6 +23,11 @@ public class DoorPromptUI : MonoBehaviour
         panel.SetActive(false);
         yesButton.onClick.AddListener(OnYes);
         noButton.onClick.AddListener(OnNo);
+        if (interactAction != null && interactAction.action != null)
+        {
+            interactAction.action.performed += OnInteract;
+            interactAction.action.Enable();
+        }
     }
 
     public void Show(int toX, int toY, int entryDir)
@@ -56,4 +64,20 @@ public class DoorPromptUI : MonoBehaviour
     }
 
     private void OnNo() => Hide();
+
+    private void OnInteract(InputAction.CallbackContext ctx)
+    {
+        if (panel != null && panel.activeInHierarchy)
+        {
+            OnYes();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (interactAction != null && interactAction.action != null)
+        {
+            interactAction.action.performed -= OnInteract;
+        }
+    }
 }
