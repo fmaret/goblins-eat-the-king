@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Upgrades (WIP)
+  m_text: Upgrades
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
   m_sharedMaterial: {fileID: 5871331128988609200, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
@@ -1206,8 +1206,8 @@ RectTransform:
   m_Children:
   - {fileID: 3314671269916626327}
   - {fileID: 7115800188894065269}
-  - {fileID: 1276388191797797416}
   - {fileID: 6835210423163925270}
+  - {fileID: 1276388191797797416}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1821,11 +1821,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7098426434433712429, guid: c0e954887b68f4064a9503384ff2f253, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 833.1002
+      value: 991.14
       objectReference: {fileID: 0}
     - target: {fileID: 7098426434433712429, guid: c0e954887b68f4064a9503384ff2f253, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -593.81805
+      value: -552.79
       objectReference: {fileID: 0}
     - target: {fileID: 7098426434433712429, guid: c0e954887b68f4064a9503384ff2f253, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

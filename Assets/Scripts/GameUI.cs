@@ -29,8 +29,9 @@ private Dictionary<ulong, PlayerInfo> playerEntries = new Dictionary<ulong, Play
 
 	void Start()
 	{
-		if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
-			gameObject.SetActive(false);
+		// Do not auto-disable the GameUI on Start; keep the singleton active so
+		// it remains visible after scene transitions (it is marked DontDestroyOnLoad).
+		// Visibility will be managed by connection callbacks.
 		// populate existing connected clients
 		if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
 		{
