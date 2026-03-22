@@ -30,6 +30,53 @@ public class PlayerController : NetworkBehaviour
     public float MoveSpeed => moveSpeed;
     public float SprintMultiplier => sprintMultiplier;
 
+    // Getters / setters for stats
+    public float AttackDamage { get => attackDamage; set => attackDamage = value; }
+    public float MagicAttackDamage { get => magicAttackDamage; set => magicAttackDamage = value; }
+    public float Defense { get => defense; set => defense = value; }
+    public float MagicDefense { get => magicDefense; set => magicDefense = value; }
+    public float LifeSteal { get => lifeSteal; set => lifeSteal = Mathf.Max(0f, value); }
+    public float ManaSteal { get => manaSteal; set => manaSteal = Mathf.Max(0f, value); }
+    public float EnduranceSteal { get => enduranceSteal; set => enduranceSteal = Mathf.Max(0f, value); }
+    public float HpRegeneration { get => hpRegeneration; set => hpRegeneration = Mathf.Max(0f, value); }
+    public float MpRegeneration { get => mpRegeneration; set => mpRegeneration = Mathf.Max(0f, value); }
+    public float EnduranceRegeneration { get => enduranceRegeneration; set => enduranceRegeneration = Mathf.Max(0f, value); }
+    public float AttackRangeStat { get => attackRange; set => attackRange = Mathf.Max(0f, value); }
+    public LayerMask EnemyLayer { get => enemyLayer; set => enemyLayer = value; }
+
+    public float MaxHpStat
+    {
+        get => maxHp;
+        set
+        {
+            maxHp = Mathf.Max(1f, value);
+            if (IsServer) hp.Value = Mathf.Min(hp.Value, maxHp);
+            UpdateHealthBar();
+        }
+    }
+
+    public float MaxMpStat
+    {
+        get => maxMp;
+        set
+        {
+            maxMp = Mathf.Max(0f, value);
+            if (IsServer) mp.Value = Mathf.Min(mp.Value, maxMp);
+            UpdateManaBar();
+        }
+    }
+
+    public float MaxEnduranceStat
+    {
+        get => maxEndurance;
+        set
+        {
+            maxEndurance = Mathf.Max(0f, value);
+            if (IsServer) endurance.Value = Mathf.Min(endurance.Value, maxEndurance);
+            UpdateEnduranceBar();
+        }
+    }
+
     // Expose some stats for UI queries
     public float CurrentHp => hp.Value;
     public float MaxHp => maxHp;
@@ -231,6 +278,7 @@ public class PlayerController : NetworkBehaviour
         }
         // notify affected clients so their local PlayerController instances update for display
         NotifyClientsOfPowerup(statInt, value, targetPlayerIndex, isUpgrade);
+        DisplayStats.Instance?.DisplayPlayerStats(this);
     }
 
     // notify the affected client(s) so their local PlayerController reflects the stat change for UI
