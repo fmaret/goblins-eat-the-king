@@ -89,6 +89,25 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        // Applique les upgrades achetées (local uniquement, avant que le serveur lise maxHp etc.)
+        if (IsOwner)
+        {
+            var upg = StatUpgradeManager.Instance;
+            if (upg != null)
+            {
+                maxHp               += upg.GetMaxHpBonus();
+                maxMp               += upg.GetMaxMpBonus();
+                maxEndurance        += upg.GetMaxEnduranceBonus();
+                attackDamage        += upg.GetAttackDamageBonus();
+                magicAttackDamage   += upg.GetMagicAttackBonus();
+                defense             += upg.GetDefenseBonus();
+                magicDefense        += upg.GetMagicDefenseBonus();
+                hpRegeneration      += upg.GetHpRegenBonus();
+                mpRegeneration      += upg.GetMpRegenBonus();
+                attackRange         += upg.GetAttackRangeBonus();
+            }
+        }
+
         if (IsServer)
         {
             hp.Value = maxHp;

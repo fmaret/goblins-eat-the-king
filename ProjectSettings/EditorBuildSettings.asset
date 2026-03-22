@@ -6,11 +6,11 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/NGO_Minimal_Setup/NGO_MapGenerator.unity
-    guid: c8cf06bd1d9d10f4aab011e76ab09a95
-  - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: 0c91bfb1b813e4910b1b51518130e121
+  - enabled: 1
+    path: Assets/NGO_Minimal_Setup/NGO_MapGenerator.unity
+    guid: c8cf06bd1d9d10f4aab011e76ab09a95
   - enabled: 0
     path: Assets/NGO_Minimal_Setup/NGO_Setup.unity
     guid: 98dbc14e1b9a6cb469f56f32dbb076ba

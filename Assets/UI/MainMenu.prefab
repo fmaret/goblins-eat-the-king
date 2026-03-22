@@ -1047,6 +1047,7 @@ GameObject:
   - component: {fileID: 7837388961698268819}
   - component: {fileID: 634925576990344759}
   - component: {fileID: 4421678455660044750}
+  - component: {fileID: 1538562384390577394}
   m_Layer: 5
   m_Name: MainMenu
   m_TagString: Untagged
@@ -1159,6 +1160,18 @@ MonoBehaviour:
   playButtonsGroup: {fileID: 4237142232031201391}
   lobbyPanel: {fileID: 1543146592471135379, guid: 82cb028a256aa43c591934e47bdf8243, type: 3}
   joinModal: {fileID: 988980270872161107}
+--- !u!114 &1538562384390577394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7320411974120758241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d7d694230917294bb01b7d2b67eba8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatUpgradeManager
 --- !u!1 &7386995609413972910
 GameObject:
   m_ObjectHideFlags: 0

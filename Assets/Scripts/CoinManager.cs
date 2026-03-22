@@ -26,6 +26,13 @@ public class CoinManager : MonoBehaviour
             Save();
     }
 
+    public void Spend(int amount)
+    {
+        TotalCoins = Mathf.Max(0, TotalCoins - amount);
+        RefreshUI();
+        Save();
+    }
+
     public void AddCoin(int amount = 1)
     {
         SessionCoins += amount;
