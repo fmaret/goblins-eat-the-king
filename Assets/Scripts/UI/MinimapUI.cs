@@ -25,7 +25,7 @@ public class MinimapUI : MonoBehaviour
     private GameObject overlay;
     private RectTransform mapContainer;
 
-    private readonly Dictionary<(int, int), Image> tiles = new();
+    private readonly Dictionary<(int, int), (Image img, GameObject go)> tiles = new();
     private readonly List<(Transform t, PlayerColor pc, RectTransform dot, Image img)> playerDots = new();
 
     private int builtMinX, builtMinY, builtMaxX, builtMaxY;
@@ -142,7 +142,7 @@ public class MinimapUI : MonoBehaviour
 
                 var img = tileGo.AddComponent<Image>();
                 img.color = colorUnvisited;
-                tiles[(x, y)] = img;
+                tiles[(x, y)] = (img, tileGo);
 
                 // Point coffre (jaune, coin haut-droit)
                 if (gen.HasChest(x, y))
@@ -187,20 +187,26 @@ public class MinimapUI : MonoBehaviour
         float startY =  (builtMaxY - builtMinY) * stepY * 0.5f;
 
         // Couleurs des salles
-        foreach (var ((x, y), img) in tiles)
+        foreach (var ((x, y), (img, go)) in tiles)
         {
             if (img == null) continue;
             var info = gen.GetRoom(x, y);
             if (info == null) continue;
 
             bool entered = gen.IsRoomEntered(x, y);
+            bool adjacentToEntered = !entered && (
+                gen.IsRoomEntered(x - 1, y) || gen.IsRoomEntered(x + 1, y) ||
+                gen.IsRoomEntered(x, y - 1) || gen.IsRoomEntered(x, y + 1));
+
+            bool visible = entered || adjacentToEntered;
+            go.SetActive(visible);
+            if (!visible) continue;
+
             bool cleared = gen.IsRoomCleared(x, y) && !gen.HasChest(x, y);
             bool isBoss  = gen.IsRoomBoss(x, y);
 
             if (!entered)
-                img.color = isBoss
-                    ? new Color(colorBoss.r, colorBoss.g, colorBoss.b, 0.30f)
-                    : colorUnvisited;
+                img.color = colorUnvisited;
             else if (isBoss)
                 img.color = colorBoss;
             else if (cleared)
