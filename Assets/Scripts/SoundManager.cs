@@ -13,6 +13,9 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioClip doorOpen;
     [SerializeField] private AudioClip rewardPickup;
 
+    [Header("Musique de menu")]
+    [SerializeField] private AudioClip menuMusic;
+
     [Header("Musique de combat")]
     [SerializeField] private AudioClip fightMusic;
     [SerializeField] private AudioClip bossFightMusic;
@@ -69,6 +72,18 @@ public class SoundManager : MonoBehaviour
     public void PlayChestOpen()  => Play(chestOpen);
     public void PlayDoorOpen()     => Play(doorOpen);
     public void PlayRewardPickup() => Play(rewardPickup);
+
+    public float FadeDuration => fadeDuration;
+
+    public void PlayMenuMusic()
+    {
+        if (menuMusic == null) return;
+        if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
+        _musicSource.clip = menuMusic;
+        _musicSource.volume = 0f;
+        _musicSource.Play();
+        _fadeCoroutine = StartCoroutine(FadeTo(musicVolume, fadeDuration));
+    }
 
     public void PlayFightMusic(bool isBoss)
     {

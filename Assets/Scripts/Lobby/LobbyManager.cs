@@ -332,7 +332,18 @@ namespace Goblins.Lobby
 
         void OnStartGameButtonPressed()
         {
-            // Only the host/server should trigger a networked scene load
+            StartCoroutine(StartGameWithMusicFade());
+        }
+
+        private System.Collections.IEnumerator StartGameWithMusicFade()
+        {
+            var sound = SoundManager.Instance;
+            if (sound != null)
+            {
+                sound.StopFightMusic();
+                yield return new WaitForSeconds(sound.FadeDuration);
+            }
+
             if (NetworkManager.Singleton != null)
             {
                 if (NetworkManager.Singleton.IsServer)
@@ -347,11 +358,10 @@ namespace Goblins.Lobby
             }
             else
             {
-                // fallback: load locally
                 SceneManager.LoadScene(gameSceneName);
                 Debug.Log("Loaded scene locally: " + gameSceneName);
             }
-            this.gameObject.SetActive(false);
+            gameObject.SetActive(false);
         }
         
         public void UpdateUI() {
