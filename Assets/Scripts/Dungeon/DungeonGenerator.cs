@@ -18,7 +18,9 @@ public class DungeonGenerator : NetworkBehaviour
 
     [Header("Ennemis")]
     [SerializeField] private GameObject enemyPrefab;
-    [SerializeField] private int enemiesPerRoom = 10;
+    [SerializeField] private int   minEnemiesPerRoom  = 3;
+    [SerializeField] private int   maxEnemiesPerRoom  = 8;
+    [SerializeField] private float enemySpawnInterval = 0.8f;
     [SerializeField] private RuntimeAnimatorController bossAnimatorController;
 
     [Header("Récompense de salle")]
@@ -309,7 +311,6 @@ public class DungeonGenerator : NetworkBehaviour
         }
         else
         {
-            roomEnemyCounts[key] = enemiesPerRoom;
             StartCoroutine(SpawnEnemiesProgressively(x, y, entryDirection));
         }
     }
@@ -332,9 +333,12 @@ public class DungeonGenerator : NetworkBehaviour
         if (spawnPoints.Count == 0)
             spawnPoints.Add(new Vector3(cx, cy, 0f));
 
-        for (int i = 0; i < enemiesPerRoom; i++)
+        int count = Random.Range(minEnemiesPerRoom, maxEnemiesPerRoom + 1);
+        roomEnemyCounts[(x, y)] = count;
+
+        for (int i = 0; i < count; i++)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(enemySpawnInterval);
 
             Vector3 origin = spawnPoints[Random.Range(0, spawnPoints.Count)];
             Vector2 offset = Random.insideUnitCircle * 0.6f;
@@ -343,6 +347,13 @@ public class DungeonGenerator : NetworkBehaviour
             var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
             var ec = go.GetComponent<EnemyController>();
             ec.SetRoom(x, y);
+
+            float hpMult     = Random.Range(0.7f,  2.0f);
+            float speedMult  = Random.Range(0.8f,  2.5f);
+            float damageMult = Random.Range(0.8f,  1.8f);
+            float scaleMult  = Random.Range(0.6f,  1.6f);
+            ec.SetRandomStats(hpMult, speedMult, damageMult, scaleMult);
+
             go.GetComponent<NetworkObject>().Spawn();
         }
     }

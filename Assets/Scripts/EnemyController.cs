@@ -30,6 +30,15 @@ public class EnemyController : NetworkBehaviour
     public void SetRoom(int x, int y) { roomX = x; roomY = y; }
     public void SetStats(float hp, float damage) { maxHp = hp; attackDamage = damage; }
 
+    public void SetRandomStats(float hpMult, float speedMult, float damageMult, float scaleMult)
+    {
+        maxHp         *= hpMult;
+        attackDamage  *= damageMult;
+        moveSpeed     *= speedMult;
+        if (enemyMovement != null) enemyMovement.moveSpeed = moveSpeed;
+        transform.localScale = Vector3.one * scaleMult;
+    }
+
     private EnemyMovement enemyMovement;
     private Animator animator;
     private Transform target;
