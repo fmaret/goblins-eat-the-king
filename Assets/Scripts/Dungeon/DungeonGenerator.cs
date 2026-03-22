@@ -29,7 +29,18 @@ public class DungeonGenerator : NetworkBehaviour
 
     public float RoomSize    => roomSize;
     public int   DungeonSeed => dungeonSeed.Value;
+    public int   GridWidth   => gridWidth;
+    public int   GridHeight  => gridHeight;
     public Vector3 SpawnPosition => new Vector3(spawnCell.x * roomSize, -spawnCell.y * roomSize, 0);
+
+    public RoomInfo GetRoom(int x, int y)
+    {
+        if (grid == null || x < 0 || x >= gridWidth || y < 0 || y >= gridHeight + 1) return null;
+        return grid[x, y];
+    }
+    public bool IsRoomEntered(int x, int y) => roomEntered.Contains((x, y));
+    public bool HasChest(int x, int y)      => chestRooms.Contains((x, y));
+    public void RegisterChestRoom(int x, int y) => chestRooms.Add((x, y));
 
     // Seed synchronisée — le host la génère, le client la reçoit
     private NetworkVariable<int> dungeonSeed = new NetworkVariable<int>(
@@ -46,6 +57,7 @@ public class DungeonGenerator : NetworkBehaviour
     private readonly Dictionary<(int, int), RoomFurnisher> furnishers = new();
 
     // Gestion ennemis par salle (server only)
+    private readonly HashSet<(int, int)> chestRooms  = new();
     private readonly HashSet<(int, int)> roomEntered = new();
     private readonly Dictionary<(int, int), int> roomEnemyCounts = new();
     private readonly HashSet<(int, int)> roomCleared = new();
@@ -197,6 +209,7 @@ public class DungeonGenerator : NetworkBehaviour
 
         if (roomEntered.Contains(key)) return;
         roomEntered.Add(key);
+        SyncRoomEnteredClientRpc(x, y);
 
         // Mémorise la direction d'entrée (pour rouvrir les bonnes portes au clear)
         if (entryDirection >= 0)
@@ -331,6 +344,10 @@ public class DungeonGenerator : NetworkBehaviour
         return new Vector3(x * roomSize, -y * roomSize, 0f);
     }
 
+    [ClientRpc]
+    private void SyncRoomEnteredClientRpc(int x, int y)
+        => roomEntered.Add((x, y));
+
     // Synchronise l'état cleared vers tous les clients
     [ClientRpc]
     private void SyncRoomClearedClientRpc(int x, int y)
@@ -403,6 +420,7 @@ public class DungeonGenerator : NetworkBehaviour
     [ClientRpc]
     private void OpenChestClientRpc(int roomX, int roomY)
     {
+        chestRooms.Remove((roomX, roomY));
         if (furnishers.TryGetValue((roomX, roomY), out var f))
             f.OpenChest();
     }
