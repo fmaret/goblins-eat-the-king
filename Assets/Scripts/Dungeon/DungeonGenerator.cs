@@ -8,9 +8,10 @@ public class DungeonGenerator : NetworkBehaviour
     public static DungeonGenerator Instance { get; private set; }
 
     [Header("Config")]
-    [SerializeField] private int gridWidth = 5;
-    [SerializeField] private int gridHeight = 5;
-    [SerializeField] private float roomSize = 10f;
+    [SerializeField] private int gridWidth      = 7;
+    [SerializeField] private int gridHeight     = 7;
+    [SerializeField] private int targetRoomCount = 14;
+    [SerializeField] private float roomSize     = 10f;
 
     [Header("Prefabs salles")]
     [SerializeField] private GameObject roomPrefab;
@@ -25,7 +26,7 @@ public class DungeonGenerator : NetworkBehaviour
     [SerializeField] private GameObject levelCompletePrefab;
 
     [Header("Spawn joueur")]
-    [SerializeField] private Vector2Int spawnCell = new Vector2Int(0, 2);
+    [SerializeField] private Vector2Int spawnCell = new Vector2Int(3, 6);
 
     public float RoomSize    => roomSize;
     public int   DungeonSeed => dungeonSeed.Value;
@@ -96,46 +97,71 @@ public class DungeonGenerator : NetworkBehaviour
 
     private void GenerateDungeon(int seed)
     {
-        Random.InitState(seed);
+        var rng = new System.Random(seed);
 
-        // Boss dans la rangée du haut, colonne aléatoire
-        int bossX = Random.Range(0, gridWidth);
-
-        // Grille 4x5 — rangée 0 = rangée boss
         grid = new RoomInfo[gridWidth, gridHeight + 1];
 
-        // Rangée boss (y=0) — seulement la colonne bossX
-        grid[bossX, 0] = new RoomInfo
-        {
-            x = bossX,
-            y = 0,
-            type = RoomType.Boss,
-            openNorth = false,
-            openSouth = true,
-            openEast = false,
-            openWest = false
-        };
+        // ── 1. Growing tree : forme organique ────────────────────────────────
+        var placed   = new HashSet<(int, int)>();
+        var frontier = new List<(int, int)>();
 
-        // Grille normale 4x4 (y=1 à y=4)
-        for (int x = 0; x < gridWidth; x++)
+        placed.Add((spawnCell.x, spawnCell.y));
+        frontier.Add((spawnCell.x, spawnCell.y));
+
+        int[] dx = {  0,  0, 1, -1 };
+        int[] dy = { -1,  1, 0,  0 };
+
+        while (placed.Count < targetRoomCount && frontier.Count > 0)
         {
-            for (int y = 1; y <= gridHeight; y++)
+            int fi = rng.Next(frontier.Count);
+            var (fx, fy) = frontier[fi];
+
+            int[] dirs = { 0, 1, 2, 3 };
+            for (int i = 3; i > 0; i--) { int j = rng.Next(i + 1); (dirs[i], dirs[j]) = (dirs[j], dirs[i]); }
+
+            bool expanded = false;
+            foreach (int d in dirs)
             {
-                grid[x, y] = new RoomInfo
+                int nx = fx + dx[d], ny = fy + dy[d];
+                if (nx >= 0 && nx < gridWidth && ny >= 1 && ny <= gridHeight && !placed.Contains((nx, ny)))
                 {
-                    x = x,
-                    y = y,
-                    type = RoomType.Normal,
-                    // Nord : ouvert si salle voisine existe au nord
-                    // y==1 → voisine du nord = boss uniquement si même colonne
-                    // y>1  → voisine du nord = salle normale toujours présente
-                    openNorth = y > 1 || x == bossX,
-                    openSouth = y < gridHeight,
-                    openEast = x < gridWidth - 1,
-                    openWest = x > 0
-                };
+                    placed.Add((nx, ny));
+                    frontier.Add((nx, ny));
+                    expanded = true;
+                    break;
+                }
             }
+            if (!expanded) frontier.RemoveAt(fi);
         }
+
+        // ── 2. Crée les RoomInfo avec portes selon adjacence réelle ──────────
+        foreach (var (x, y) in placed)
+        {
+            grid[x, y] = new RoomInfo
+            {
+                x = x, y = y, type = RoomType.Normal,
+                openNorth = y > 1 && placed.Contains((x, y - 1)),
+                openSouth = placed.Contains((x, y + 1)),
+                openEast  = placed.Contains((x + 1, y)),
+                openWest  = placed.Contains((x - 1, y)),
+            };
+        }
+
+        // ── 3. Salle boss au-dessus de la salle la plus haute ────────────────
+        int minY = int.MaxValue;
+        foreach (var (_, y) in placed) if (y < minY) minY = y;
+
+        var topCols = new List<int>();
+        foreach (var (x, y) in placed) if (y == minY) topCols.Add(x);
+        int bossX = topCols[rng.Next(topCols.Count)];
+        int bossY = minY - 1;
+
+        grid[bossX, bossY] = new RoomInfo
+        {
+            x = bossX, y = bossY, type = RoomType.Boss,
+            openNorth = false, openSouth = true, openEast = false, openWest = false
+        };
+        grid[bossX, minY].openNorth = true;
 
         BuildDungeon();
 

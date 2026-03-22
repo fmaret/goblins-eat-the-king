@@ -28,7 +28,7 @@ public class MinimapUI : MonoBehaviour
     private readonly Dictionary<(int, int), Image> tiles = new();
     private readonly List<(Transform t, PlayerColor pc, RectTransform dot, Image img)> playerDots = new();
 
-    private int builtW, builtH;
+    private int builtMinX, builtMinY, builtMaxX, builtMaxY;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
     void Start() => BuildOverlay();
@@ -109,13 +109,23 @@ public class MinimapUI : MonoBehaviour
         if (gen == null) return;
 
         int w = gen.GridWidth;
-        int h = gen.GridHeight + 1; // +1 rangée boss
-        builtW = w; builtH = h;
+        int h = gen.GridHeight + 1;
+
+        // Bounding box des salles réelles
+        builtMinX = int.MaxValue; builtMaxX = int.MinValue;
+        builtMinY = int.MaxValue; builtMaxY = int.MinValue;
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                if (gen.GetRoom(x, y) != null)
+                {
+                    if (x < builtMinX) builtMinX = x; if (x > builtMaxX) builtMaxX = x;
+                    if (y < builtMinY) builtMinY = y; if (y > builtMaxY) builtMaxY = y;
+                }
 
         float stepX  = tileSize + tileGap;
         float stepY  = tileSize + tileGap;
-        float startX = -(w - 1) * stepX * 0.5f;
-        float startY =  (h - 1) * stepY * 0.5f;
+        float startX = -(builtMaxX - builtMinX) * stepX * 0.5f;
+        float startY =  (builtMaxY - builtMinY) * stepY * 0.5f;
 
         for (int y = 0; y < h; y++)
         {
@@ -128,7 +138,7 @@ public class MinimapUI : MonoBehaviour
                 tileGo.transform.SetParent(mapContainer, false);
                 var rt = tileGo.GetComponent<RectTransform>();
                 rt.sizeDelta        = new Vector2(tileSize, tileSize);
-                rt.anchoredPosition = new Vector2(startX + x * stepX, startY - y * stepY);
+                rt.anchoredPosition = new Vector2(startX + (x - builtMinX) * stepX, startY - (y - builtMinY) * stepY);
 
                 var img = tileGo.AddComponent<Image>();
                 img.color = colorUnvisited;
@@ -173,8 +183,8 @@ public class MinimapUI : MonoBehaviour
 
         float stepX  = tileSize + tileGap;
         float stepY  = tileSize + tileGap;
-        float startX = -(builtW - 1) * stepX * 0.5f;
-        float startY =  (builtH - 1) * stepY * 0.5f;
+        float startX = -(builtMaxX - builtMinX) * stepX * 0.5f;
+        float startY =  (builtMaxY - builtMinY) * stepY * 0.5f;
 
         // Couleurs des salles
         foreach (var ((x, y), img) in tiles)
@@ -205,7 +215,7 @@ public class MinimapUI : MonoBehaviour
             if (t == null || dot == null) continue;
             int rx = Mathf.RoundToInt( t.position.x / gen.RoomSize);
             int ry = Mathf.RoundToInt(-t.position.y / gen.RoomSize);
-            dot.anchoredPosition = new Vector2(startX + rx * stepX, startY - ry * stepY);
+            dot.anchoredPosition = new Vector2(startX + (rx - builtMinX) * stepX, startY - (ry - builtMinY) * stepY);
             if (img != null) img.color = pc.GetColor();
         }
     }
