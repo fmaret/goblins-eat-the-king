@@ -50,9 +50,18 @@ public class StatUpgradeManager : MonoBehaviour
         if (current >= MaxLevel) return false;
 
         int cost = CostForNextLevel(current);
-        if (CoinManager.Instance == null || CoinManager.Instance.TotalCoins < cost) return false;
 
-        CoinManager.Instance.Spend(cost);
+        var coins = CoinManager.Instance;
+        int totalCoins = coins != null ? coins.TotalCoins : PlayerPrefs.GetInt("TotalCoins", 0);
+        if (totalCoins < cost) { Debug.LogWarning($"[Upgrade] Pas assez de coins : {totalCoins} / {cost}"); return false; }
+
+        if (coins != null)
+            coins.Spend(cost);
+        else
+        {
+            PlayerPrefs.SetInt("TotalCoins", totalCoins - cost);
+            PlayerPrefs.Save();
+        }
         SetLevel(statKey, current + 1);
         Save();
         return true;

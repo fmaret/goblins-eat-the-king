@@ -38,15 +38,16 @@ public class UpgradeMenuUI : MonoBehaviour
         var mgr   = StatUpgradeManager.Instance;
         var coins = CoinManager.Instance;
 
-        if (coinsLabel != null && coins != null)
-            coinsLabel.text = $"MONEY : {coins.TotalCoins}";
+        int totalCoins = coins != null ? coins.TotalCoins : PlayerPrefs.GetInt("TotalCoins", 0);
+        if (coinsLabel != null)
+            coinsLabel.text = $"MONEY : {totalCoins}";
 
         foreach (var (key, label) in Stats)
         {
             int  lvl    = mgr != null ? mgr.GetLevel(key) : 0;
             int  cost   = mgr != null ? mgr.CostForNextLevel(lvl) : 0;
             bool maxed  = lvl >= StatUpgradeManager.MaxLevel;
-            bool afford = !maxed && coins != null && coins.TotalCoins >= cost;
+            bool afford = !maxed && totalCoins >= cost;
 
             var row = BuildRow(label, lvl, cost, maxed, afford, key);
             row.transform.SetParent(container, false);
@@ -115,9 +116,11 @@ public class UpgradeMenuUI : MonoBehaviour
         btnTxt.color     = Color.white;
 
         string k = key;
+        btn.interactable = true; // force pour debug
         btn.onClick.AddListener(() =>
         {
-            StatUpgradeManager.Instance?.TryUpgrade(k);
+            Debug.Log($"[UpgradeUI] Click {k} | coins={CoinManager.Instance?.TotalCoins} | mgr={StatUpgradeManager.Instance}");
+            if (StatUpgradeManager.Instance != null) StatUpgradeManager.Instance.TryUpgrade(k);
             Refresh();
         });
 

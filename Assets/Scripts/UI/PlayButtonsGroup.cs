@@ -51,7 +51,6 @@ public class PlayButtonsGroup : MonoBehaviour
         {
             Debug.Log("PlayButtonsGroup: NetworkManager not available or already running");
         }
-        LobbyManager.Instance?.CreateLobby();
         Debug.Log("Lobbypanel: " + (lobbyPanel != null ? lobbyPanel.name : "null"));
         if (lobbyPanel != null) {
             lobbyPanel.SetActive(true);
@@ -59,6 +58,7 @@ public class PlayButtonsGroup : MonoBehaviour
             Debug.Log($"lobbyPanel.activeSelf={lobbyPanel.activeSelf}, activeInHierarchy={lobbyPanel.activeInHierarchy}");
             Debug.Log($"lobbyPanel parent={(lobbyPanel.transform.parent!=null ? lobbyPanel.transform.parent.name : "(root)")}");
         }
+        if (LobbyManager.Instance != null) LobbyManager.Instance.CreateLobby();
         Debug.Log($"PlayButtonsGroup: LobbyManager.Instance present={(LobbyManager.Instance!=null)}");
         Debug.Log($"NM null? {NetworkManager.Singleton == null}");
         Debug.Log($"IsServer: {NetworkManager.Singleton?.IsServer}");

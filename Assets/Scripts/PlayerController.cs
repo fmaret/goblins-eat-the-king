@@ -106,6 +106,11 @@ public class PlayerController : NetworkBehaviour
                 mpRegeneration      += upg.GetMpRegenBonus();
                 attackRange         += upg.GetAttackRangeBonus();
             }
+
+            if (!IsServer)
+                InitUpgradedStatsServerRpc(maxHp, maxMp, maxEndurance,
+                    attackDamage, magicAttackDamage, defense, magicDefense,
+                    hpRegeneration, mpRegeneration, attackRange);
         }
 
         if (IsServer)
@@ -169,6 +174,26 @@ public class PlayerController : NetworkBehaviour
                 DisplayStats.Instance.SetActive(true);
             }
         }
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    private void InitUpgradedStatsServerRpc(float mHp, float mMp, float mEnd,
+        float atk, float mAtk, float def, float mDef,
+        float hpReg, float mpReg, float range)
+    {
+        maxHp             = mHp;
+        maxMp             = mMp;
+        maxEndurance      = mEnd;
+        attackDamage      = atk;
+        magicAttackDamage = mAtk;
+        defense           = def;
+        magicDefense      = mDef;
+        hpRegeneration    = hpReg;
+        mpRegeneration    = mpReg;
+        attackRange       = range;
+        hp.Value          = maxHp;
+        mp.Value          = maxMp;
+        endurance.Value   = maxEndurance;
     }
 
     // Request from owning client to apply a powerup (runs on server)

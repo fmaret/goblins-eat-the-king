@@ -16,6 +16,12 @@ public class CoinManager : MonoBehaviour
 
     private void Awake()
     {
+        if (FindObjectsByType<CoinManager>(FindObjectsSortMode.None).Length > 1)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        DontDestroyOnLoad(gameObject);
         TotalCoins = PlayerPrefs.GetInt(SaveKey, 0);
         RefreshUI();
     }
