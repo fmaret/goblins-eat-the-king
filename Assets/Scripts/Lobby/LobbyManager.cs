@@ -148,25 +148,6 @@ namespace Goblins.Lobby
                 if (startGameButton != null) startGameButton.interactable = true;
 
                 NetworkManager.Singleton.StartHost();
-                // ensure this LobbyManager has a NetworkObject and is spawned so RPCs work
-                var netObj = GetComponent<Unity.Netcode.NetworkObject>();
-                if (netObj == null)
-                {
-                    Debug.Log("LobbyManager: No NetworkObject found, adding one at runtime.");
-                    netObj = gameObject.AddComponent<Unity.Netcode.NetworkObject>();
-                }
-                if (!netObj.IsSpawned && NetworkManager.Singleton.IsServer)
-                {
-                    try
-                    {
-                        netObj.Spawn();
-                        Debug.Log("LobbyManager: NetworkObject spawned for LobbyManager.");
-                    }
-                    catch (System.Exception e)
-                    {
-                        Debug.LogWarning("LobbyManager: failed to spawn NetworkObject: " + e.Message);
-                    }
-                }
 
                 // as host/server, broadcast state
                 if (IsServer) BroadcastLobbyState();
