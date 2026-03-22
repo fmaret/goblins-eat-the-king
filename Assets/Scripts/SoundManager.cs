@@ -11,6 +11,7 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioClip coinPickup;
     [SerializeField] private AudioClip chestOpen;
     [SerializeField] private AudioClip doorOpen;
+    [SerializeField] private AudioClip rewardPickup;
 
     [Header("Musique de combat")]
     [SerializeField] private AudioClip fightMusic;
@@ -66,7 +67,8 @@ public class SoundManager : MonoBehaviour
     public void PlayPotBreak()   => Play(potBreak);
     public void PlayCoinPickup() => Play(coinPickup, 0.7f);
     public void PlayChestOpen()  => Play(chestOpen);
-    public void PlayDoorOpen()   => Play(doorOpen);
+    public void PlayDoorOpen()     => Play(doorOpen);
+    public void PlayRewardPickup() => Play(rewardPickup);
 
     public void PlayFightMusic(bool isBoss)
     {

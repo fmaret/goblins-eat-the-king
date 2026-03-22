@@ -358,7 +358,6 @@ public class DungeonGenerator : NetworkBehaviour
     [ClientRpc]
     private void OpenDoorClientRpc(int x, int y, int direction)
     {
-        if (SoundManager.Instance != null) SoundManager.Instance.PlayDoorOpen();
         if (rooms.TryGetValue((x, y), out var builder))
             builder.OpenDoor(direction);
 

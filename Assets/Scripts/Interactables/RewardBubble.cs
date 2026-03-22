@@ -59,7 +59,7 @@ public class RewardBubble : NetworkBehaviour
     private void CollectedClientRpc(ulong collectorClientId)
     {
         if (NetworkManager.Singleton.LocalClientId != collectorClientId) return;
-        Debug.Log($"[RewardBubble] Collectée par le client {collectorClientId} !");
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayRewardPickup();
         UpgradeChoice.Instance.GenerateNewChoices();
         UpgradeChoice.Instance.SetActive(true);
     }
