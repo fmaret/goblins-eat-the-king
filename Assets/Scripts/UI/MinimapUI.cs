@@ -35,7 +35,7 @@ public class MinimapUI : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+        if (InputSystem.actions["Minimap"].WasPressedThisFrame())
             Toggle();
 
         if (overlay != null && overlay.activeSelf)
