@@ -36,8 +36,8 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (IsOwner)
         {
-            // Ne pas lire l'input si le joueur est mort
-            if (playerController != null && playerController.IsDead)
+            // Ne pas lire l'input si le joueur est mort ou si l'escape menu est ouvert
+            if ((playerController != null && playerController.IsDead) || (EscapeMenuManager.Instance != null && EscapeMenuManager.Instance.IsOpen))
             {
                 netMovement.Value = Vector2.zero;
                 netIsSprinting.Value = false;
@@ -77,6 +77,7 @@ public class PlayerMovement : NetworkBehaviour
     void FixedUpdate()
     {
         if (!IsOwner || IsAttacking) return;
+        if (EscapeMenuManager.Instance != null && EscapeMenuManager.Instance.IsOpen) return;
         float baseSpeed = 3f;
         float mult = 2f;
         if (playerController != null)
