@@ -19,6 +19,11 @@ public class MainMenuController : MonoBehaviour
     public GameObject lobbyPanel; // optional: assign your Lobby panel here
     public GameObject joinModal; // optional: assign your Join modal here
 
+    void Start()
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayMenuMusic();
+    }
+
     void Awake()
     {
         // try to find buttons by name if not assigned

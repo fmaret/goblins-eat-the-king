@@ -126,6 +126,19 @@ public class DungeonGenerator : NetworkBehaviour
         }
 
         BuildDungeon();
+
+        if (IsServer)
+            TeleportPlayersToSpawnClientRpc();
+    }
+
+    [ClientRpc]
+    private void TeleportPlayersToSpawnClientRpc()
+    {
+        foreach (var player in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+        {
+            if (!player.IsOwner) continue;
+            player.transform.position = SpawnPosition;
+        }
     }
 
     private void BuildDungeon()
@@ -345,7 +358,6 @@ public class DungeonGenerator : NetworkBehaviour
     [ClientRpc]
     private void OpenDoorClientRpc(int x, int y, int direction)
     {
-        if (SoundManager.Instance != null) SoundManager.Instance.PlayDoorOpen();
         if (rooms.TryGetValue((x, y), out var builder))
             builder.OpenDoor(direction);
 

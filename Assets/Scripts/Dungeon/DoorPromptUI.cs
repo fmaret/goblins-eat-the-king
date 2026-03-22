@@ -34,6 +34,8 @@ public class DoorPromptUI : MonoBehaviour
     {
         Hide();
 
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayDoorOpen();
+
         var gen = DungeonGenerator.Instance;
         if (gen == null) return;
 
