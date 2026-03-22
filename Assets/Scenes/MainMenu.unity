@@ -1474,6 +1474,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MainMenu
       objectReference: {fileID: 0}
+    - target: {fileID: 7765421911225708089, guid: 48b2ffde6bc3d4bd79b753cdc1083c6c, type: 3}
+      propertyPath: lobbyPanel
+      value: 
+      objectReference: {fileID: 861744668}
     - target: {fileID: 7835930945277576580, guid: 48b2ffde6bc3d4bd79b753cdc1083c6c, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
