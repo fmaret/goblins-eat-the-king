@@ -53,9 +53,11 @@ namespace Goblins.Lobby
         void Awake()
         {
             Instance = this;
+            Debug.Log("[Lobby] Awake: LobbyManager instance assigned.");
         }
 
         void Start() {
+            Debug.Log("[Lobby] Start: LobbyManager Start() called. active=" + gameObject.activeSelf + " enabled=" + enabled);
             // this.gameObject.SetActive(false);
             if (startGameButton != null)
             {
@@ -65,19 +67,60 @@ namespace Goblins.Lobby
             // Network spawn handling will trigger RequestLobbyState for clients
         }
 
+        private bool hasSentPlayerInfo = false;
+
         public override void OnNetworkSpawn()
         {
+            Debug.Log($"[Lobby] OnNetworkSpawn called. IsClient={IsClient} IsServer={IsServer} OwnerClientId={OwnerClientId}");
             base.OnNetworkSpawn();
-            // If we're a client (not host/server) ask server for current lobby state
+
             if (IsClient && !IsServer)
             {
                 RequestLobbyStateServerRpc();
+
+                // ✅ AJOUT ICI
+                if (!hasSentPlayerInfo)
+                {
+                    hasSentPlayerInfo = true;
+
+                    var color = Color.white; // ou stocke le choix du joueur ailleurs
+                    RegisterPlayerInfoServerRpc("Player", color.r, color.g, color.b, color.a);
+                }
             }
-            // if we're server, broadcast current state
+
             if (IsServer)
             {
                 BroadcastLobbyState();
             }
+
+            // Subscribe to low-level network connect/disconnect callbacks (server-side)
+            if (NetworkManager.Singleton != null && IsServer)
+            {
+                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+                NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+                Debug.Log("[Lobby] Subscribed to NetworkManager connection callbacks.");
+            }
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            base.OnNetworkDespawn();
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+                NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+                Debug.Log("[Lobby] Unsubscribed from NetworkManager connection callbacks.");
+            }
+        }
+
+        private void OnClientConnected(ulong clientId)
+        {
+            Debug.Log($"[Lobby] Network client connected: {clientId}");
+        }
+
+        private void OnClientDisconnected(ulong clientId)
+        {
+            Debug.Log($"[Lobby] Network client disconnected: {clientId}");
         }
 
         public async void CreateLobby()
@@ -164,12 +207,13 @@ namespace Goblins.Lobby
         {
             try
             {
+                Debug.Log($"Attempting to join Relay lobby with code {code}...");
                 await UnityServices.InitializeAsync();
                 if (!AuthenticationService.Instance.IsSignedIn)
                     await AuthenticationService.Instance.SignInAnonymouslyAsync();
-
+                Debug.Log("Authenticated with Unity Services. Joining Relay allocation...");
                 JoinAllocation alloc = await RelayService.Instance.JoinAllocationAsync(code);
-
+                Debug.Log($"Joined Relay allocation. Server IP: {alloc.RelayServer.IpV4}, Port: {alloc.RelayServer.Port}");
                 var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
                 transport.SetClientRelayData(
                     alloc.RelayServer.IpV4,
@@ -179,12 +223,12 @@ namespace Goblins.Lobby
                     alloc.ConnectionData,
                     alloc.HostConnectionData
                 );
-
+                Debug.Log("Configured UnityTransport with Relay data, starting client...");
                 // set local lobby state
                 isHost = false;
                 lobbyCode = code;
                 OnPlayersChanged?.Invoke();
-
+                Debug.Log($"Set local lobby code to {lobbyCode}. Starting client...");
                 if (startGameButton != null) startGameButton.interactable = false;
 
                 NetworkManager.Singleton.StartClient();
@@ -318,6 +362,7 @@ namespace Goblins.Lobby
 
         private System.Collections.IEnumerator StartGameWithMusicFade()
         {
+            Debug.Log("Starting game with music fade...");
             var sound = SoundManager.Instance;
             if (sound != null)
             {
@@ -343,9 +388,11 @@ namespace Goblins.Lobby
                 Debug.Log("Loaded scene locally: " + gameSceneName);
             }
             gameObject.SetActive(false);
+            Debug.Log("LobbyManager deactivated after starting game.");
         }
         
         public void UpdateUI() {
+            Debug.Log("Updating lobby UI...");
             if (playersContainer == null)
             {
                 Debug.LogWarning("LobbyManager.UpdateUI: playersContainer not assigned");
@@ -371,6 +418,7 @@ namespace Goblins.Lobby
                 var img = go.GetComponentInChildren<UnityEngine.UI.Image>();
                 if (img != null) img.color = p.color;
             }
+            Debug.Log($"Finished updating lobby UI. Total children: {playersContainer.childCount}");
         }
     }
 }

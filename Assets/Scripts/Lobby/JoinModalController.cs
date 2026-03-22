@@ -22,7 +22,18 @@ public class JoinModalController : MonoBehaviour
             Debug.Log("JoinModalController: hooked validateButton listener");
         }
         UpdateColorLabel();
-        if (lobbyPanel == null) lobbyPanel = GameObject.Find("LobbyPanel");
+        if (lobbyPanel == null)
+        {
+            // GameObject.Find ne trouve pas les objets inactifs, on utilise FindObjectsOfTypeAll
+            foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go.name == "LobbyPanel" && go.scene.IsValid())
+                {
+                    lobbyPanel = go;
+                    break;
+                }
+            }
+        }
     }
 
     void CycleColor()
@@ -43,6 +54,9 @@ public class JoinModalController : MonoBehaviour
         if (string.IsNullOrEmpty(code)) return;
 
         bool ok = false;
+        // Activer le panel AVANT StartClient pour que NGO puisse trouver les NetworkObjects in-scene
+        if (lobbyPanel != null) lobbyPanel.SetActive(true);
+
         // prefer Relay if LobbyManager is configured for it
         if (LobbyManager.Instance != null && LobbyManager.Instance.useRelay)
         {
@@ -51,8 +65,8 @@ public class JoinModalController : MonoBehaviour
                 ok = await LobbyManager.Instance.StartClientRelayAsync(code);
                 if (ok)
                 {
+                    Debug.Log("JoinModal: successfully joined lobby via Relay");
                     // register this player on the server so the host updates everyone
-                    LobbyManager.Instance.RegisterPlayerInfoServerRpc("Player", colors[colorIndex].r, colors[colorIndex].g, colors[colorIndex].b, colors[colorIndex].a);
                 }
             }
             catch (System.Exception ex)
@@ -79,7 +93,7 @@ public class JoinModalController : MonoBehaviour
         if (ok)
         {
             this.gameObject.SetActive(false);
-            if (lobbyPanel != null) lobbyPanel.SetActive(true);
+            // lobbyPanel est déjà actif (activé avant StartClient)
         }
         else
         {
