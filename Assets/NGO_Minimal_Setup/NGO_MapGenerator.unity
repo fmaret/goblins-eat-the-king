@@ -348,7 +348,9 @@ MonoBehaviour:
   roomSize: 30
   roomPrefab: {fileID: 4056034874441315933, guid: 99b611696e909984b8340da730359edf, type: 3}
   enemyPrefab: {fileID: 646927935402244903, guid: b39b805b529e5409ebb2557da3d91cc7, type: 3}
-  enemiesPerRoom: 5
+  minEnemiesPerRoom: 3
+  maxEnemiesPerRoom: 8
+  enemySpawnInterval: 0.8
   bossAnimatorController: {fileID: 9100000, guid: 6540f859199ff4e7f9eeb9d7d95a01d1, type: 2}
   rewardBubblePrefab: {fileID: 2137881761359205907, guid: a32ff74ca24e2424e94803343d8d8dcb, type: 3}
   levelCompletePrefab: {fileID: 7204126777611861591, guid: 64c01285fbd23384cbb6fda94ca0a066, type: 3}
@@ -663,6 +665,56 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 347964611}
   m_CullTransparentMesh: 1
+--- !u!1 &350677150
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 350677152}
+  - component: {fileID: 350677151}
+  m_Layer: 0
+  m_Name: MinimapSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &350677151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 350677150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df06070a4143b424d9b2d319cc01e2bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinimapUI
+  tileSize: 70
+  tileGap: 6
+  colorUnvisited: {r: 0.12, g: 0.12, b: 0.14, a: 0.8}
+  colorVisited: {r: 0.4, g: 0.42, b: 0.55, a: 0.95}
+  colorCleared: {r: 0.22, g: 0.55, b: 0.22, a: 0.95}
+  colorBoss: {r: 0.65, g: 0.1, b: 0.1, a: 0.95}
+--- !u!4 &350677152
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 350677150}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 177.65976, y: -188.44337, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &498822154 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4391245217050365420, guid: 5d88c000f9779494e87dc4a2e2d96b63, type: 3}
@@ -2353,7 +2405,7 @@ MonoBehaviour:
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
     Address: 127.0.0.1
-    Port: 7780
+    Port: 7789
     ServerListenAddress: 127.0.0.1
     ClientBindPort: 0
   DebugSimulator:
@@ -3557,3 +3609,4 @@ SceneRoots:
   - {fileID: 773804849}
   - {fileID: 1077967188}
   - {fileID: 778513814}
+  - {fileID: 350677152}

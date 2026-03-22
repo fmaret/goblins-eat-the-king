@@ -163,6 +163,10 @@ public class DungeonGenerator : NetworkBehaviour
             if (placed.Contains((x - 1, y))) n++;
             if (n == 1) deadEnds.Add((x, y));
         }
+        // Fallback : si aucun dead-end (placed très petit), prend une salle quelconque
+        if (deadEnds.Count == 0)
+            foreach (var p in placed) { deadEnds.Add(p); break; }
+
         for (int i = deadEnds.Count - 1; i > 0; i--)
         { int j = rng.Next(i + 1); (deadEnds[i], deadEnds[j]) = (deadEnds[j], deadEnds[i]); }
 
