@@ -981,6 +981,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: UpgradesUi
       objectReference: {fileID: 0}
+    - target: {fileID: 2476924814326651226, guid: 4eb116ad9568f9e449f9127a8e9faa62, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2476924814326651226, guid: 4eb116ad9568f9e449f9127a8e9faa62, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3598063234112854360, guid: 4eb116ad9568f9e449f9127a8e9faa62, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0.009702851
+      objectReference: {fileID: 0}
     - target: {fileID: 7207249324088933032, guid: 4eb116ad9568f9e449f9127a8e9faa62, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -1059,6 +1071,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7207249324088933032, guid: 4eb116ad9568f9e449f9127a8e9faa62, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9010175064653665121, guid: 4eb116ad9568f9e449f9127a8e9faa62, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9010175064653665121, guid: 4eb116ad9568f9e449f9127a8e9faa62, type: 3}
+      propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

@@ -174,6 +174,9 @@ public class PlayerController : NetworkBehaviour
                 DisplayStats.Instance.SetActive(true);
             }
         }
+         if (InputSystem.actions["Escape"].WasPressedThisFrame()) {
+            EscapeMenuManager.Instance.Toggle();
+        }
     }
 
     [ServerRpc(RequireOwnership = true)]
