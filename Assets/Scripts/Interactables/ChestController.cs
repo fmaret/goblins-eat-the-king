@@ -7,7 +7,8 @@ public class ChestController : MonoBehaviour
 {
     [SerializeField] private Sprite openSprite;
     [SerializeField] private GameObject coinPrefab;
-    [SerializeField] private int coinCount = 5;
+    [SerializeField] private int minCoins = 3;
+    [SerializeField] private int maxCoins = 8;
 
     private int roomX, roomY;
     private bool opened;
@@ -33,6 +34,7 @@ public class ChestController : MonoBehaviour
         if (openSprite != null && sr != null)
             sr.sprite = openSprite;
 
+        int coinCount = Random.Range(minCoins, maxCoins + 1);
         for (int i = 0; i < coinCount; i++)
         {
             if (coinPrefab == null) break;

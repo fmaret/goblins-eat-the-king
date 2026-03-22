@@ -285,6 +285,8 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHp: 100
   healthBar: {fileID: 0}
+  coinPrefab: {fileID: 4493141593008526777, guid: bbb627dacec28214fad2705adb1db35b, type: 3}
+  isBoss: 0
   moveSpeed: 2
   detectionRange: 5
   blockIntensity: 0.5

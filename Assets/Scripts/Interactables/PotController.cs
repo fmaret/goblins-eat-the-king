@@ -5,7 +5,8 @@ using UnityEngine;
 public class PotController : MonoBehaviour
 {
     [SerializeField] private GameObject coinPrefab;
-    [SerializeField] private int coinCount = 3;
+    [SerializeField] private int minCoins = 1;
+    [SerializeField] private int maxCoins = 4;
 
     private int roomX, roomY, potIndex;
     private bool broken;
@@ -33,6 +34,7 @@ public class PotController : MonoBehaviour
         if (SoundManager.Instance != null) SoundManager.Instance.PlayPotBreak();
 
         // Spawn des pièces localement (même résultat sur tous les clients)
+        int coinCount = Random.Range(minCoins, maxCoins + 1);
         for (int i = 0; i < coinCount; i++)
         {
             if (coinPrefab == null) break;

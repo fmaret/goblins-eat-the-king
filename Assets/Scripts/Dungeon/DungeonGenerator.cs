@@ -310,6 +310,7 @@ public class DungeonGenerator : NetworkBehaviour
                 go.GetComponent<Animator>().runtimeAnimatorController = bossAnimatorController;
             var ec = go.GetComponent<EnemyController>();
             ec.SetRoom(x, y);
+            ec.isBoss = true;
             ec.SetStats(200f, 25f);
             go.GetComponent<NetworkObject>().Spawn();
         }

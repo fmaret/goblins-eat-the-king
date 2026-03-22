@@ -8,6 +8,10 @@ public class EnemyController : NetworkBehaviour
     [SerializeField] private float maxHp = 100f;
     [SerializeField] private StatBar healthBar;
 
+    [Header("Loot")]
+    [SerializeField] private GameObject coinPrefab;
+    [HideInInspector] public bool isBoss = false;
+
     [Header("Déplacement")]
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float detectionRange = 5f;
@@ -222,10 +226,35 @@ public class EnemyController : NetworkBehaviour
             // schedule despawn on server
             if (IsServer)
             {
+                // Loot pièces
+                int coinCount = isBoss ? Random.Range(10, 20) : WeightedCoinDrop();
+                if (coinPrefab != null && coinCount > 0)
+                    DropCoinsClientRpc(coinCount, isBoss ? 2.5f : 0.5f);
+
                 if (DungeonGenerator.Instance != null)
                     DungeonGenerator.Instance.NotifyEnemyDied(roomX, roomY, transform.position);
                 StartCoroutine(DespawnAfterDelay());
             }
+        }
+    }
+
+    // 60% → 0, 30% → 1, 10% → 2
+    private static int WeightedCoinDrop()
+    {
+        float r = Random.value;
+        if (r < 0.60f) return 0;
+        if (r < 0.90f) return 1;
+        return 2;
+    }
+
+    [ClientRpc]
+    private void DropCoinsClientRpc(int count, float radius)
+    {
+        if (coinPrefab == null) return;
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 offset = Random.insideUnitCircle * radius;
+            Instantiate(coinPrefab, transform.position + (Vector3)offset, Quaternion.identity);
         }
     }
 
