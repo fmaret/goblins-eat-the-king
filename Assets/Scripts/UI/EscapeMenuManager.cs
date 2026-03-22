@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using Unity.Netcode;
 
 public class EscapeMenuManager : MonoBehaviour
 {
@@ -12,7 +14,11 @@ public class EscapeMenuManager : MonoBehaviour
     [Header("Buttons (assign in Inspector)")]
     public Button resumeButton;
     public Button optionsButton;
+    public Button mainMenuButton;
     public Button quitButton;
+
+    [Header("Scenes")]
+    public string mainMenuSceneName = "MainMenu";
 
     public bool IsOpen { get; private set; }
 
@@ -38,6 +44,11 @@ public class EscapeMenuManager : MonoBehaviour
         {
             optionsButton.onClick.RemoveAllListeners();
             optionsButton.onClick.AddListener(OnOptionsClicked);
+        }
+        if (mainMenuButton != null)
+        {
+            mainMenuButton.onClick.RemoveAllListeners();
+            mainMenuButton.onClick.AddListener(GoToMainMenu);
         }
         if (quitButton != null)
         {
@@ -70,9 +81,18 @@ public class EscapeMenuManager : MonoBehaviour
         Debug.Log("EscapeMenu: Options clicked (not implemented)");
     }
 
+    private void GoToMainMenu()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            NetworkManager.Singleton.Shutdown();
+        SceneManager.LoadScene(mainMenuSceneName);
+    }
+
     private void QuitGame()
     {
         Debug.Log("EscapeMenu: Quit requested");
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            NetworkManager.Singleton.Shutdown();
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
