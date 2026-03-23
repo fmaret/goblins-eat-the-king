@@ -85,8 +85,6 @@ public class PlayerController : NetworkBehaviour
     public float CurrentEndurance => endurance.Value;
     public float MaxEndurance => maxEndurance;
 
-    [SerializeField] private StatBar healthBar;
-
     private Animator animator;
     private PlayerMovement playerMovement;
 
@@ -511,12 +509,6 @@ public class PlayerController : NetworkBehaviour
 
             GameUI.Instance.SetPlayerEntryHealth(OwnerClientId, hp.Value, maxHp, text);
         }
-        else if (healthBar != null)
-        {
-            // local fallback for scenes without GameUI
-            if (IsOwner)
-                healthBar.Set(hp.Value, maxHp, text);
-        }
     }
 
     private void UpdateManaBar()
@@ -634,20 +626,20 @@ public class PlayerController : NetworkBehaviour
     void FixedUpdate()
     {
         if (!IsServer) return;
-        // apply regeneration every second
+        // apply regeneration every 0.1 second
         regenAccumulator += Time.fixedDeltaTime;
-        if (regenAccumulator >= 1f)
+        if (regenAccumulator >= 0.1f)
         {
             regenAccumulator = 0f;
             if (hp.Value > 0f && hp.Value < maxHp)
             {
-                hp.Value = Mathf.Min(maxHp, hp.Value + hpRegeneration);
-                OnHpChanged(hp.Value - hpRegeneration, hp.Value);
+                hp.Value = Mathf.Min(maxHp, hp.Value + hpRegeneration * 0.1f);
+                OnHpChanged(hp.Value - hpRegeneration * 0.1f, hp.Value);
             }
             if (mp.Value < maxMp)
-                mp.Value = Mathf.Min(maxMp, mp.Value + mpRegeneration);
-            if (endurance.Value < maxEndurance)
-                endurance.Value = Mathf.Min(maxEndurance, endurance.Value + enduranceRegeneration);
+                mp.Value = Mathf.Min(maxMp, mp.Value + mpRegeneration * 0.1f);
+            if (endurance.Value < maxEndurance && !playerMovement.IsSprinting)
+                endurance.Value = Mathf.Min(maxEndurance, endurance.Value + enduranceRegeneration * 0.1f);
         }
     }
 

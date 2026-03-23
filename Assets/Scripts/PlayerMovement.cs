@@ -19,6 +19,7 @@ public class PlayerMovement : NetworkBehaviour
 
     // Accessible par PlayerController pour bloquer le mouvement pendant l'attaque
     public bool IsAttacking { get; set; }
+    public bool IsSprinting => netIsSprinting.Value;
 
     void Awake()
     {

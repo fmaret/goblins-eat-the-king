@@ -374,8 +374,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInfo
   nameLabel: {fileID: 1391767766179213110}
   healthBar: {fileID: 8396796162500943956}
-  manaBar: {fileID: 0}
-  enduranceBar: {fileID: 0}
+  manaBar: {fileID: 5390469859449129052}
+  enduranceBar: {fileID: 2312583157942701493}
 --- !u!1 &4963178707730353391
 GameObject:
   m_ObjectHideFlags: 0
@@ -823,6 +823,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1a36ce26720cf47e588086cea9a6dfb0, type: 3}
+--- !u!114 &5390469859449129052 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5532905867119626496, guid: 1a36ce26720cf47e588086cea9a6dfb0, type: 3}
+  m_PrefabInstance: {fileID: 434068862573298012}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13306460e47d04efe85c5f80214d87bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!224 &8145971020319287710 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8577758804001466562, guid: 1a36ce26720cf47e588086cea9a6dfb0, type: 3}
@@ -1095,3 +1106,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8577758804001466562, guid: 1a36ce26720cf47e588086cea9a6dfb0, type: 3}
   m_PrefabInstance: {fileID: 7845031628222940341}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2312583157942701493 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5532905867119626496, guid: 1a36ce26720cf47e588086cea9a6dfb0, type: 3}
+  m_PrefabInstance: {fileID: 7845031628222940341}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13306460e47d04efe85c5f80214d87bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
