@@ -14,17 +14,19 @@ public class UpgradeChoiceItem : MonoBehaviour
     [SerializeField] private TextMeshProUGUI downgradeTitleLabel;
     [SerializeField] private TextMeshProUGUI downgradeDescriptionLabel;
     [SerializeField] private Button selectButton;
+    [SerializeField] private TextMeshProUGUI titleLabel;
 
     private Powerup upgradePowerup;
     private Powerup downgradePowerup;
     private Action onSelected;
+    
 
-    public void Configure(Powerup upgrade, Powerup downgrade, Action onSelect)
+    public void Configure(string title, Powerup upgrade, Powerup downgrade, Action onSelect)
     {
         upgradePowerup = upgrade;
         downgradePowerup = downgrade;
         onSelected = onSelect;
-
+        if (titleLabel != null) titleLabel.text = title;
         // populate upgrade fields
         if (upgradePowerup != null)
         {

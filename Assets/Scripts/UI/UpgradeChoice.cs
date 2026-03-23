@@ -164,7 +164,7 @@ public class UpgradeChoice : MonoBehaviour
 
                 // capture local vars for callback
                 var u = upPower; var d = downPower;
-                item.Configure(u, d, () => OnChoiceSelected(u, d));
+                item.Configure($"Choix {i + 1}", u, d, () => OnChoiceSelected(u, d));
             }
             else
             {

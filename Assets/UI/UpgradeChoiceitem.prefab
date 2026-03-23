@@ -344,6 +344,7 @@ MonoBehaviour:
   downgradeTitleLabel: {fileID: 8839121439230050376}
   downgradeDescriptionLabel: {fileID: 6181174049894013690}
   selectButton: {fileID: 4998469352487355357}
+  titleLabel: {fileID: 6990787849171532096}
 --- !u!1 &3500193324242109827
 GameObject:
   m_ObjectHideFlags: 0
