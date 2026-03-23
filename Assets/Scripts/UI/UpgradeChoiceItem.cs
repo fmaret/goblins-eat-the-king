@@ -145,7 +145,8 @@ public class UpgradeChoiceItem : MonoBehaviour
         // used for showing differences
         if (stat == StatType.HP || stat == StatType.MP || stat == StatType.ENDURANCE)
             return Mathf.RoundToInt(v).ToString();
-        if (stat == StatType.LIFESTEAL || stat == StatType.MANASTEAL || stat == StatType.ENDURANCESTEAL)
+        if (stat == StatType.LIFESTEAL || stat == StatType.MANASTEAL || stat == StatType.ENDURANCESTEAL
+            || stat == StatType.CRITICAL_RATE || stat == StatType.DODGE_RATE)
             return (v * 100f).ToString("0") + "%";
         return v.ToString("0.##");
     }
@@ -154,7 +155,8 @@ public class UpgradeChoiceItem : MonoBehaviour
     {
         if (stat == StatType.HP || stat == StatType.MP || stat == StatType.ENDURANCE)
             return Mathf.CeilToInt(v).ToString();
-        if (stat == StatType.LIFESTEAL || stat == StatType.MANASTEAL || stat == StatType.ENDURANCESTEAL)
+        if (stat == StatType.LIFESTEAL || stat == StatType.MANASTEAL || stat == StatType.ENDURANCESTEAL
+            || stat == StatType.CRITICAL_RATE || stat == StatType.DODGE_RATE)
             return (v * 100f).ToString("0") + "%";
         return v.ToString("0.##");
     }

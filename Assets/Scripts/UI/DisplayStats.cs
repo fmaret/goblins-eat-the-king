@@ -62,17 +62,17 @@ public class DisplayStats : MonoBehaviour
         // tmp.fontSize = 30;
         // tmp.text = stats;
         textAttackDamage.text = playerController.AttackDamage.ToString("0.##");
-        // textMagicAttackDamage.text = playerController.MagicAttackDamage.ToString();
+        textMagicAttackDamage.text = playerController.MagicAttackDamage.ToString();
         textDefense.text = playerController.Defense.ToString("0.##");
-        // textMagicDefense.text = playerController.MagicDefense.ToString();
+        textMagicDefense.text = playerController.MagicDefense.ToString();
         textSpeed.text = playerController.MoveSpeed.ToString("0.##");
-        // textCriticalChance.text = "0"; // Placeholder, replace with actual value
+        textCriticalChance.text = playerController.CriticalRate.ToString("P0");
         textLifeSteal.text = playerController.LifeSteal.ToString("0.##");
-        // textManaSteal.text = playerController.ManaSteal.ToString();
+        textManaSteal.text = playerController.ManaSteal.ToString();
         // textEnduranceSteal.text = playerController.EnduranceSteal.ToString();
         // textHpRegeneration.text = playerController.HpRegeneration.ToString();
-        // textMpRegeneration.text = playerController.MpRegeneration.ToString();
-        // textEnduranceRegeneration.text = playerController.EnduranceRegeneration.ToString();
-        textDodgeChance.text = "0"; // Placeholder, replace with actual value
+        textMpRegeneration.text = playerController.MpRegeneration.ToString();
+        textEnduranceRegeneration.text = playerController.EnduranceRegeneration.ToString();
+        textDodgeChance.text = playerController.DodgeRate.ToString("P0");
     }
 }

@@ -11,10 +11,13 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float magicAttackDamage = 15f;
     [SerializeField] private float defense = 5f;
     [SerializeField] private float magicDefense = 3f;
+    [SerializeField] private float criticalRate = 0.05f;       // probabilité 0-1
+    [SerializeField] private float criticalDamage = 1.5f;    // multiplicateur de dégâts
+    [SerializeField] private float dodgeRate = 0f;           // probabilité 0-1
     [SerializeField] private float lifeSteal = 0f;
     [SerializeField] private float manaSteal = 0f;
     [SerializeField] private float enduranceSteal = 0f;
-    [SerializeField] private float hpRegeneration = 1f;
+    [SerializeField] private float hpRegeneration = 0.01f;
     [SerializeField] private float mpRegeneration = 2f;
     [SerializeField] private float enduranceRegeneration = 5f;
     [SerializeField] private float attackRange = 0.8f;
@@ -35,6 +38,9 @@ public class PlayerController : NetworkBehaviour
     public float MagicAttackDamage { get => magicAttackDamage; set => magicAttackDamage = value; }
     public float Defense { get => defense; set => defense = value; }
     public float MagicDefense { get => magicDefense; set => magicDefense = value; }
+    public float CriticalRate   { get => criticalRate;   set => criticalRate   = Mathf.Clamp01(value); }
+    public float CriticalDamage { get => criticalDamage; set => criticalDamage = Mathf.Max(1f, value); }
+    public float DodgeRate      { get => dodgeRate;      set => dodgeRate      = Mathf.Clamp01(value); }
     public float LifeSteal { get => lifeSteal; set => lifeSteal = Mathf.Max(0f, value); }
     public float ManaSteal { get => manaSteal; set => manaSteal = Mathf.Max(0f, value); }
     public float EnduranceSteal { get => enduranceSteal; set => enduranceSteal = Mathf.Max(0f, value); }
@@ -127,6 +133,9 @@ public class PlayerController : NetworkBehaviour
             case StatType.LIFESTEAL: return lifeSteal;
             case StatType.MANASTEAL: return manaSteal;
             case StatType.ENDURANCESTEAL: return enduranceSteal;
+            case StatType.CRITICAL_RATE: return criticalRate;
+            case StatType.CRITICAL_DAMAGE: return criticalDamage;
+            case StatType.DODGE_RATE: return dodgeRate;
             case StatType.RANGE: return attackRange;
             default: return 0f;
         }
@@ -370,18 +379,21 @@ public class PlayerController : NetworkBehaviour
             case StatType.ENDURANCESTEAL:
                 enduranceSteal = Mathf.Max(0f, enduranceSteal + sign * value);
                 break;
+            case StatType.CRITICAL_RATE:
+                criticalRate = Mathf.Clamp01(criticalRate + sign * value);
+                break;
+            case StatType.CRITICAL_DAMAGE:
+                criticalDamage = Mathf.Max(1f, criticalDamage + sign * value);
+                break;
+            case StatType.DODGE_RATE:
+                dodgeRate = Mathf.Clamp01(dodgeRate + sign * value);
+                break;
             case StatType.RANGE:
                 attackRange = Mathf.Max(0f, attackRange + sign * value);
                 break;
             default:
                 Debug.LogWarning($"ApplyPowerup: stat {stat} not handled on PlayerController");
                 break;
-        }
-        // after applying server-side, notify the owner client so it can update its local display
-        if (IsServer)
-        {
-            // notify only the affected players (owner clients of the target player objects)
-            // we don't know targetPlayerIndex here; the caller ApplyPowerupToTargets will call NotifyClientsOfPowerup separately
         }
     }
 
@@ -445,6 +457,15 @@ public class PlayerController : NetworkBehaviour
             case StatType.ENDURANCESTEAL:
                 enduranceSteal = Mathf.Max(0f, enduranceSteal + sign * value);
                 break;
+            case StatType.CRITICAL_RATE:
+                criticalRate = Mathf.Clamp01(criticalRate + sign * value);
+                break;
+            case StatType.CRITICAL_DAMAGE:
+                criticalDamage = Mathf.Max(1f, criticalDamage + sign * value);
+                break;
+            case StatType.DODGE_RATE:
+                dodgeRate = Mathf.Clamp01(dodgeRate + sign * value);
+                break;
             case StatType.RANGE:
                 attackRange = Mathf.Max(0f, attackRange + sign * value);
                 break;
@@ -458,6 +479,8 @@ public class PlayerController : NetworkBehaviour
     public void TakeDamage(float damage)
     {
         if (!IsServer) return;
+        // dodge check
+        if (dodgeRate > 0f && Random.value < dodgeRate) return;
         // apply defense reduction (minimum 1 damage)
         float effective = Mathf.Max(1f, damage - defense);
         hp.Value = Mathf.Max(0f, hp.Value - effective);
@@ -593,8 +616,9 @@ public class PlayerController : NetworkBehaviour
                 var enemy = hit.GetComponent<EnemyController>();
                 if (enemy != null)
                 {
-                    // apply damage on enemy server-side
-                    float damageDealt = attackDamage; // could be extended with crits, modifiers, etc.
+                    // crit check
+                    bool isCrit = criticalRate > 0f && Random.value < criticalRate;
+                    float damageDealt = isCrit ? attackDamage * criticalDamage : attackDamage;
                     enemy.ApplyDamage(damageDealt);
 
                     // apply life/mana/endurance steal to this player
@@ -694,6 +718,8 @@ public class PlayerController : NetworkBehaviour
                $"MATK: {magicAttackDamage:0.##}\n" +
                $"DEF: {defense:0.##}\n" +
                $"MDEF: {magicDefense:0.##}\n" +
+               $"CRIT: {criticalRate:P0} x{criticalDamage:0.##}\n" +
+               $"DODGE: {dodgeRate:P0}\n" +
                $"LIFESTEAL: {lifeSteal:P0}\n" +
                $"MANASTEAL: {manaSteal:P0}\n" +
                $"ENDSTEAL: {enduranceSteal:P0}\n" +

@@ -13,6 +13,18 @@
     },
     {
         "type": "UPGRADE",
+        "stats": "MP",
+        "minValue": 1,
+        "maxValue": 5
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "MP",
+        "minValue": 1,
+        "maxValue": 5
+    },
+    {
+        "type": "UPGRADE",
         "stats": "ENDURANCE",
         "minValue": 1,
         "maxValue": 5
@@ -32,6 +44,18 @@
     {
         "type": "DOWNGRADE",
         "stats": "HP_REGENERATION",
+        "minValue": 1,
+        "maxValue": 5
+    },
+    {
+        "type": "UPGRADE",
+        "stats": "MP_REGENERATION",
+        "minValue": 1,
+        "maxValue": 5
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "MP_REGENERATION",
         "minValue": 1,
         "maxValue": 5
     },
@@ -73,6 +97,18 @@
     },
     {
         "type": "UPGRADE",
+        "stats": "MAGIC_ATTACK",
+        "minValue": 1,
+        "maxValue": 3
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "MAGIC_ATTACK",
+        "minValue": 1,
+        "maxValue": 3
+    },
+    {
+        "type": "UPGRADE",
         "stats": "DEFENSE",
         "minValue": 1,
         "maxValue": 3
@@ -85,6 +121,30 @@
     },
     {
         "type": "UPGRADE",
+        "stats": "MAGIC_DEFENSE",
+        "minValue": 1,
+        "maxValue": 3
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "MAGIC_DEFENSE",
+        "minValue": 1,
+        "maxValue": 3
+    },
+    {
+        "type": "UPGRADE",
+        "stats": "ATTACK_SPEED",
+        "minValue": 0.1,
+        "maxValue": 0.5
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "ATTACK_SPEED",
+        "minValue": 0.1,
+        "maxValue": 0.5
+    },
+    {
+        "type": "UPGRADE",
         "stats": "CRITICAL_RATE",
         "minValue": 0.01,
         "maxValue": 0.05
@@ -94,6 +154,18 @@
         "stats": "CRITICAL_RATE",
         "minValue": 0.01,
         "maxValue": 0.05
+    },
+    {
+        "type": "UPGRADE",
+        "stats": "CRITICAL_DAMAGE",
+        "minValue": 0.1,
+        "maxValue": 0.5
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "CRITICAL_DAMAGE",
+        "minValue": 0.1,
+        "maxValue": 0.5
     },
     {
         "type": "UPGRADE",
@@ -121,6 +193,18 @@
     },
     {
         "type": "UPGRADE",
+        "stats": "ENDURANCESTEAL",
+        "minValue": 0.01,
+        "maxValue": 0.05
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "ENDURANCESTEAL",
+        "minValue": 0.01,
+        "maxValue": 0.05
+    },
+    {
+        "type": "UPGRADE",
         "stats": "DODGE_RATE",
         "minValue": 0.01,
         "maxValue": 0.05
@@ -130,5 +214,41 @@
         "stats": "DODGE_RATE",
         "minValue": 0.01,
         "maxValue": 0.05
+    },
+    {
+        "type": "UPGRADE",
+        "stats": "LUCK",
+        "minValue": 1,
+        "maxValue": 5
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "LUCK",
+        "minValue": 1,
+        "maxValue": 5
+    },
+    {
+        "type": "UPGRADE",
+        "stats": "VISION_RANGE",
+        "minValue": 0.1,
+        "maxValue": 0.5
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "VISION_RANGE",
+        "minValue": 0.1,
+        "maxValue": 0.5
+    },
+    {
+        "type": "UPGRADE",
+        "stats": "RANGE",
+        "minValue": 0.1,
+        "maxValue": 0.5
+    },
+    {
+        "type": "DOWNGRADE",
+        "stats": "RANGE",
+        "minValue": 0.1,
+        "maxValue": 0.5
     }
 ]

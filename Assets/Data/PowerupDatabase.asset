@@ -24,16 +24,6 @@ MonoBehaviour:
     minValue: 1
     maxValue: 5
   - type: 0
-    stats: MP
-    stat: 1
-    minValue: 1
-    maxValue: 5
-  - type: 1
-    stats: MP
-    stat: 1
-    minValue: 1
-    maxValue: 5
-  - type: 0
     stats: ENDURANCE
     stat: 2
     minValue: 1
@@ -51,16 +41,6 @@ MonoBehaviour:
   - type: 1
     stats: HP_REGENERATION
     stat: 3
-    minValue: 1
-    maxValue: 5
-  - type: 0
-    stats: MP_REGENERATION
-    stat: 4
-    minValue: 1
-    maxValue: 5
-  - type: 1
-    stats: MP_REGENERATION
-    stat: 4
     minValue: 1
     maxValue: 5
   - type: 0
@@ -94,16 +74,6 @@ MonoBehaviour:
     minValue: 1
     maxValue: 3
   - type: 0
-    stats: MAGIC_ATTACK
-    stat: 8
-    minValue: 1
-    maxValue: 3
-  - type: 1
-    stats: MAGIC_ATTACK
-    stat: 8
-    minValue: 1
-    maxValue: 3
-  - type: 0
     stats: DEFENSE
     stat: 9
     minValue: 1
@@ -114,26 +84,6 @@ MonoBehaviour:
     minValue: 1
     maxValue: 3
   - type: 0
-    stats: MAGIC_DEFENSE
-    stat: 10
-    minValue: 1
-    maxValue: 3
-  - type: 1
-    stats: MAGIC_DEFENSE
-    stat: 10
-    minValue: 1
-    maxValue: 3
-  - type: 0
-    stats: ATTACK_SPEED
-    stat: 11
-    minValue: 0.1
-    maxValue: 0.5
-  - type: 1
-    stats: ATTACK_SPEED
-    stat: 11
-    minValue: 0.1
-    maxValue: 0.5
-  - type: 0
     stats: CRITICAL_RATE
     stat: 12
     minValue: 0.01
@@ -143,16 +93,6 @@ MonoBehaviour:
     stat: 12
     minValue: 0.01
     maxValue: 0.05
-  - type: 0
-    stats: CRITICAL_DAMAGE
-    stat: 13
-    minValue: 0.1
-    maxValue: 0.5
-  - type: 1
-    stats: CRITICAL_DAMAGE
-    stat: 13
-    minValue: 0.1
-    maxValue: 0.5
   - type: 0
     stats: LIFESTEAL
     stat: 14
@@ -174,16 +114,6 @@ MonoBehaviour:
     minValue: 0.01
     maxValue: 0.05
   - type: 0
-    stats: ENDURANCESTEAL
-    stat: 16
-    minValue: 0.01
-    maxValue: 0.05
-  - type: 1
-    stats: ENDURANCESTEAL
-    stat: 16
-    minValue: 0.01
-    maxValue: 0.05
-  - type: 0
     stats: DODGE_RATE
     stat: 17
     minValue: 0.01
@@ -193,33 +123,3 @@ MonoBehaviour:
     stat: 17
     minValue: 0.01
     maxValue: 0.05
-  - type: 0
-    stats: LUCK
-    stat: 18
-    minValue: 1
-    maxValue: 5
-  - type: 1
-    stats: LUCK
-    stat: 18
-    minValue: 1
-    maxValue: 5
-  - type: 0
-    stats: VISION_RANGE
-    stat: 19
-    minValue: 0.1
-    maxValue: 0.5
-  - type: 1
-    stats: VISION_RANGE
-    stat: 19
-    minValue: 0.1
-    maxValue: 0.5
-  - type: 0
-    stats: RANGE
-    stat: 20
-    minValue: 0.1
-    maxValue: 0.5
-  - type: 1
-    stats: RANGE
-    stat: 20
-    minValue: 0.1
-    maxValue: 0.5
