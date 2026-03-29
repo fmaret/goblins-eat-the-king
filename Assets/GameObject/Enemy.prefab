@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 4567627050462571949}
   - component: {fileID: 1424239869305363444}
   - component: {fileID: 8151624077019825631}
+  - component: {fileID: -2672927335642200819}
   m_Layer: 3
   m_Name: Enemy
   m_TagString: Untagged
@@ -138,7 +139,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 194281921
+  GlobalObjectIdHash: 230851819
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -294,7 +295,6 @@ MonoBehaviour:
   attackDefinitions:
   - {fileID: 11400000, guid: f98a31c165e2e494bb28e39694dd61e5, type: 2}
   - {fileID: 11400000, guid: edd333c794bfc498e9144a08ac24d08c, type: 2}
-  debugAttackBrain: 1
   attackRange: 1.5
   attackDamage: 10
   attackCooldown: 1.5
@@ -332,3 +332,17 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 1
+--- !u!114 &-2672927335642200819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 646927935402244903}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac22952a14a1349c6890cc88b14fc9fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SortByY
+  pivotOffsetY: 0
+  multiplier: 100

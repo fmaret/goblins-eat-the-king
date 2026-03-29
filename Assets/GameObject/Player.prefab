@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 1712485497030357961}
   - component: {fileID: 4567627050462571949}
   - component: {fileID: 7247763838222582579}
+  - component: {fileID: 2733411267788357663}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -165,12 +166,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   ShowTopMostFoldoutHeaderGroup: 1
   attackDamage: 100
+  magicAttackDamage: 15
+  defense: 5
+  magicDefense: 3
+  criticalRate: 0.05
+  criticalDamage: 1.5
+  dodgeRate: 0
+  lifeSteal: 0
+  manaSteal: 0
+  enduranceSteal: 0
+  hpRegeneration: 0.01
+  mpRegeneration: 2
+  enduranceRegeneration: 5
   attackRange: 1.5
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
   maxHp: 100
-  healthBar: {fileID: 0}
+  maxMp: 50
+  maxEndurance: 100
+  moveSpeed: 3
+  sprintMultiplier: 2
 --- !u!114 &3222807183391753532
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -303,5 +319,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   ShowTopMostFoldoutHeaderGroup: 1
-  moveSpeed: 3
-  sprintMultiplier: 2
+  enduranceDrainPerSecond: 15
+--- !u!114 &2733411267788357663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 646927935402244903}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac22952a14a1349c6890cc88b14fc9fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SortByY
+  pivotOffsetY: 0
+  multiplier: 100
