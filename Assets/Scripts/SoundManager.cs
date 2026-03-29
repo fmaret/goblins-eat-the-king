@@ -29,7 +29,6 @@ public class SoundManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log($"[SoundManager] Awake | scene={gameObject.scene.name} | id={GetInstanceID()}");
 
         _pool = new AudioSource[6];
         for (int i = 0; i < _pool.Length; i++)

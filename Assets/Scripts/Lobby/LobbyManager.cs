@@ -304,8 +304,8 @@ namespace Goblins.Lobby
         }
 
         // ServerRpc called by clients to register their player (name + color)
-        [ServerRpc(RequireOwnership = false)]
-        public void RegisterPlayerInfoServerRpc(string name, float r, float g, float b, float a, ServerRpcParams rpcParams = default)
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void RegisterPlayerInfoServerRpc(string name, float r, float g, float b, float a, RpcParams rpcParams = default)
         {
             var col = new Color(r, g, b, a);
             Debug.Log($"RegisterPlayerInfoServerRpc from client {rpcParams.Receive.SenderClientId}: name={name} color={col}");
@@ -315,8 +315,8 @@ namespace Goblins.Lobby
         }
 
         // Client requests the current lobby state from server
-        [ServerRpc(RequireOwnership = false)]
-        public void RequestLobbyStateServerRpc(ServerRpcParams rpcParams = default)
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void RequestLobbyStateServerRpc(RpcParams rpcParams = default)
         {
             Debug.Log($"RequestLobbyStateServerRpc from client {rpcParams.Receive.SenderClientId}");
             var state = new LobbyState { code = lobbyCode, players = players };

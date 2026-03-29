@@ -16,7 +16,7 @@ MonoBehaviour:
   damage: 10
   cooldown: 1.5
   weight: 1
-  attackRange: 10
+  attackRange: 2
   areaRadius: 10
   coneAngle: 360
   windupTime: 0.5

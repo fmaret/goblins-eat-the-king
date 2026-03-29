@@ -22,7 +22,6 @@ public class EnemyController : NetworkBehaviour
 
     [Header("Attaque")]
     [SerializeField] private List<AttackDefinition> attackDefinitions = new List<AttackDefinition>();
-    [SerializeField] private bool debugAttackBrain = false;
 
     // Legacy (backward compat)
     [SerializeField] private float attackRange = 0.8f;
@@ -56,9 +55,6 @@ public class EnemyController : NetworkBehaviour
     private IEnemyAttack currentAttack;
     private float seed;
     private float speedMultiplier = 1f;
-
-    private enum State { Idle, Chase, Attack }
-    private State state = State.Idle;
 
     void Awake()
     {
@@ -167,7 +163,7 @@ public class EnemyController : NetworkBehaviour
 
     private void UpdateState()
     {
-        if (target == null) { state = State.Idle; enemyMovement.netMovement.Value = Vector2.zero; return; }
+        if (target == null) { enemyMovement.netMovement.Value = Vector2.zero; return; }
 
         float dist = Vector2.Distance(transform.position, target.position);
         Vector2 toTarget = ((Vector2)target.position - (Vector2)transform.position).normalized;
@@ -177,13 +173,9 @@ public class EnemyController : NetworkBehaviour
         float effectiveDetectionRange = Mathf.Max(detectionRange, GetMaxTriggerRange());
         if (dist > effectiveDetectionRange)
         {
-            state = State.Idle;
             enemyMovement.netMovement.Value = Vector2.zero;
             return;
         }
-
-        // On est en vue, soit on chasse soit on attaque
-        state = State.Chase;
 
         // Essaye de lancer une attaque
         if (attackBrain != null && currentAttack == null)
@@ -195,7 +187,6 @@ public class EnemyController : NetworkBehaviour
             IEnemyAttack attack = attackBrain.SelectAttack(transform, toTarget, nearestPlayer);
             if (attack != null)
             {
-                state = State.Attack;
                 currentAttack = attack;
                 enemyMovement.netMovement.Value = Vector2.zero;
                 attack.StartAttack(transform, toTarget, nearestPlayer);

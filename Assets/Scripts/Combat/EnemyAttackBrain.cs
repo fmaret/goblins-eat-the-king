@@ -60,7 +60,7 @@ public class EnemyAttackBrain : MonoBehaviour
             candidates.Add(def);
         }
 
-        Debug.Log($"[EnemyAttackBrain] {candidates.Count}/{availableAttacks.Count} candidate(s) at dist={dist:F2}");
+        if (debugLog) Debug.Log($"[EnemyAttackBrain] {candidates.Count}/{availableAttacks.Count} candidate(s) at dist={dist:F2}");
 
         if (candidates.Count == 0)
             return null;
@@ -76,7 +76,7 @@ public class EnemyAttackBrain : MonoBehaviour
             if (roll <= 0f) { chosen = c; break; }
         }
 
-        Debug.Log($"[EnemyAttackBrain] >>> Launching '{chosen.name}' ({chosen.attackType}) [weight={chosen.weight}/{totalWeight:F2}]");
+        if (debugLog) Debug.Log($"[EnemyAttackBrain] >>> Launching '{chosen.name}' ({chosen.attackType}) [weight={chosen.weight}/{totalWeight:F2}]");
 
         return new AttackRunner(this, chosen);
     }
@@ -120,7 +120,7 @@ public class EnemyAttackBrain : MonoBehaviour
         {
             brain.lastAttackTimes[def] = Time.time;
             brain.IsExecutingAttack = true;
-            Debug.Log($"[EnemyAttackBrain] StartAttack: '{def.name}' ({def.attackType})");
+            if (brain.debugLog) Debug.Log($"[EnemyAttackBrain] StartAttack: '{def.name}' ({def.attackType})");
             brain.StartCoroutine(Execute(enemyTransform, dir, nearestPlayer));
         }
 
@@ -153,8 +153,7 @@ public class EnemyAttackBrain : MonoBehaviour
                 brain.animator.SetBool("isAttacking", true);
                 brain.animator.speed = def.animationClipDuration / Mathf.Max(0.01f, def.windupTime + def.recoveryTime);
             }
-
-            Debug.Log($"[EnemyAttackBrain] Executing '{def.name}' ({def.attackType})");
+            if (brain.debugLog) Debug.Log($"[EnemyAttackBrain] Executing '{def.name}' ({def.attackType})");
 
             switch (def.attackType)
             {
@@ -165,7 +164,7 @@ public class EnemyAttackBrain : MonoBehaviour
                 case AttackType.Projectile:   yield return brain.StartCoroutine(ExecuteProjectile(source, dir, nearestPlayer));   break;
             }
 
-            Debug.Log($"[EnemyAttackBrain] Finished '{def.name}' ({def.attackType})");
+            if (brain.debugLog) Debug.Log($"[EnemyAttackBrain] Finished '{def.name}' ({def.attackType})");
 
             // Stop animation immédiatement après le hit
             if (brain.enemyMovement != null)
@@ -241,7 +240,7 @@ public class EnemyAttackBrain : MonoBehaviour
         {
             if (target == null) { Debug.LogWarning("[Spikes] target is null!"); yield break; }
 
-            Debug.Log($"[Spikes] Starting — count={def.spikeCount} areaRadius={def.areaRadius} spikeHitRadius={def.spikeHitRadius} windupTime={def.windupTime}");
+            if (brain.debugLog) Debug.Log($"[Spikes] Starting — count={def.spikeCount} areaRadius={def.areaRadius} spikeHitRadius={def.spikeHitRadius} windupTime={def.windupTime}");
 
             // Génère les positions des piques autour du joueur
             Vector2[] positions = new Vector2[def.spikeCount];
@@ -254,23 +253,22 @@ public class EnemyAttackBrain : MonoBehaviour
                 for (int i = 0; i < def.spikeCount; i++)
                     indicators[i] = Object.Instantiate(def.spikePrefab, positions[i], Quaternion.identity);
             else
-                Debug.Log("[Spikes] No spikePrefab set (visual only, hit still applies)");
+                if (brain.debugLog) Debug.Log("[Spikes] No spikePrefab set (visual only, hit still applies)");
 
             // Phase windup
             yield return new WaitForSeconds(def.windupTime);
 
             // Frappe
             float hitRadius = def.spikeHitRadius > 0f ? def.spikeHitRadius : Mathf.Max(0.5f, def.areaRadius * 0.4f);
-            Debug.Log($"[Spikes] Hitting {def.spikeCount} positions with hitRadius={hitRadius}");
+            if (brain.debugLog) Debug.Log($"[Spikes] Hitting {def.spikeCount} positions with hitRadius={hitRadius}");
 
             for (int i = 0; i < def.spikeCount; i++)
             {
-                Debug.Log($"[Spikes] Spike {i} at {positions[i]}");
+                if (brain.debugLog) Debug.Log($"[Spikes] Spike {i} at {positions[i]}");
                 Collider2D[] hits = Physics2D.OverlapCircleAll(positions[i], hitRadius);
-                Debug.Log($"[Spikes] Spike {i} hit {hits.Length} colliders");
+                if (brain.debugLog) Debug.Log($"[Spikes] Spike {i} hit {hits.Length} colliders");
                 foreach (var hit in hits)
-                    Debug.Log($"[Spikes]   → {hit.gameObject.name} (tag={hit.tag})");
-
+                    if (brain.debugLog) Debug.Log($"[Spikes]   → {hit.gameObject.name} (tag={hit.tag})");
                 HitInRadius(source.position, positions[i], hitRadius, def.knockbackForce);
                 if (indicators[i] != null) Object.Destroy(indicators[i]);
             }

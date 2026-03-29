@@ -36,13 +36,19 @@ public class AuraHaloEffect : MonoBehaviour
 
     void OnEnable()
     {
+        var ps = GetComponent<ParticleSystem>();
+        if (ps != null)
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         SetupParticleSystem();
-        GetComponent<ParticleSystem>().Play(true);
+        if (ps != null)
+            ps.Play(true);
     }
 
     void OnDisable()
     {
-        GetComponent<ParticleSystem>().Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var ps = GetComponent<ParticleSystem>();
+        if (ps != null)
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 
     void OnValidate()
@@ -65,7 +71,7 @@ public class AuraHaloEffect : MonoBehaviour
         main.startColor = color;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.maxParticles = 500;
-        main.playOnAwake = true;
+        main.playOnAwake = false;
 
         // ── Emission ──────────────────────────────────────────────────────
         var emission = ps.emission;

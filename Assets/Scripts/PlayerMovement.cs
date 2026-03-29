@@ -40,11 +40,6 @@ public class PlayerMovement : NetworkBehaviour
         playerController = GetComponent<PlayerController>();
     }
 
-    public override void OnNetworkSpawn()
-    {
-        Debug.Log("PlayerMovement spawned for " + OwnerClientId);
-    }
-
     void Update()
     {
         if (IsOwner)

@@ -16,13 +16,11 @@ public class CameraFollow : MonoBehaviour
 
     private IEnumerator WaitForLocalPlayer()
     {
-        Debug.Log("[CameraFollow] Coroutine démarrée, recherche du joueur local...");
         while (target == null)
         {
             TryFindPlayer();
             yield return new WaitForSeconds(0.1f);
         }
-        Debug.Log($"[CameraFollow] Target trouvée : {target.name}");
     }
 
     void OnDestroy()

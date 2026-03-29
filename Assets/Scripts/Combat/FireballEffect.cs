@@ -36,13 +36,19 @@ public class FireballEffect : MonoBehaviour
 
     void OnEnable()
     {
+        var ps = GetComponent<ParticleSystem>();
+        if (ps != null)
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         SetupParticleSystem();
-        GetComponent<ParticleSystem>().Play(true);
+        if (ps != null)
+            ps.Play(true);
     }
 
     void OnDisable()
     {
-        GetComponent<ParticleSystem>().Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var ps = GetComponent<ParticleSystem>();
+        if (ps != null)
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 
     void OnValidate()
@@ -65,7 +71,7 @@ public class FireballEffect : MonoBehaviour
         main.startColor = coreColor;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.maxParticles = 300;
-        main.playOnAwake = true;
+        main.playOnAwake = false;
         main.gravityModifier = -0.05f; // légère montée des flammes
 
         // ── Emission ──────────────────────────────────────────────────────

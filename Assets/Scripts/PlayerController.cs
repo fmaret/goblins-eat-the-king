@@ -234,7 +234,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = true)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     private void InitUpgradedStatsServerRpc(float mHp, float mMp, float mEnd,
         float atk, float mAtk, float def, float mDef,
         float hpReg, float mpReg, float range)
@@ -255,8 +255,8 @@ public class PlayerController : NetworkBehaviour
     }
 
     // Request from owning client to apply a powerup (runs on server)
-    [ServerRpc(RequireOwnership = true)]
-    public void RequestApplyPowerupServerRpc(int statInt, float value, int targetPlayerIndex, bool isUpgrade, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+    public void RequestApplyPowerupServerRpc(int statInt, float value, int targetPlayerIndex, bool isUpgrade)
     {
         if (!IsServer) return;
         ApplyPowerupToTargets(statInt, value, targetPlayerIndex, isUpgrade);
@@ -715,8 +715,8 @@ public class PlayerController : NetworkBehaviour
     }
 
     // Server-side attack handling: perform overlap and apply damage + steal
-    [ServerRpc(RequireOwnership = false)]
-    public void AttackServerRpc(Vector2 dir, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void AttackServerRpc(Vector2 dir)
     {
         if (!IsServer) return;
 
@@ -781,8 +781,8 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    void ConsumeEnduranceServerRpc(float amount, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    void ConsumeEnduranceServerRpc(float amount, RpcParams rpcParams = default)
     {
         // ensure the RPC caller owns this player
         if (rpcParams.Receive.SenderClientId != OwnerClientId) return;
