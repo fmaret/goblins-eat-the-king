@@ -16,13 +16,13 @@ public class SwordHitbox : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log($"[SwordHitbox] Touche : {other.name} (tag={other.tag})");
+        // Debug.Log($"[SwordHitbox] Touche : {other.name} (tag={other.tag})");
 
         var enemy = other.GetComponent<EnemyController>();
         if (enemy != null) { enemy.TakeDamageServerRpc(damage); return; }
 
         var pot = other.GetComponentInParent<PotController>();
-        Debug.Log($"[SwordHitbox] PotController trouvé : {pot != null}");
+        // Debug.Log($"[SwordHitbox] PotController trouvé : {pot != null}");
         if (pot != null) pot.TakeDamage();
     }
 }
