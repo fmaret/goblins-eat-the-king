@@ -1,6 +1,8 @@
 using UnityEngine;
 using Unity.Netcode;
+using Goblins.Combat;
 using System.Collections;
+using System.Collections.Generic;
 
 public class EnemyController : NetworkBehaviour
 {
@@ -14,11 +16,15 @@ public class EnemyController : NetworkBehaviour
 
     [Header("Déplacement")]
     [SerializeField] private float moveSpeed = 2f;
-    [SerializeField] private float detectionRange = 5f;
+    [SerializeField] private float detectionRange = 20f;
     [SerializeField] private float blockIntensity = 0.5f; // variation side-step when chasing
     [SerializeField] private float despawnDelay = 5f;
 
     [Header("Attaque")]
+    [SerializeField] private List<AttackDefinition> attackDefinitions = new List<AttackDefinition>();
+    [SerializeField] private bool debugAttackBrain = false;
+
+    // Legacy (backward compat)
     [SerializeField] private float attackRange = 0.8f;
     [SerializeField] private float attackDamage = 10f;
     [SerializeField] private float attackCooldown = 1.5f;
@@ -45,8 +51,9 @@ public class EnemyController : NetworkBehaviour
 
     private EnemyMovement enemyMovement;
     private Animator animator;
+    private EnemyAttackBrain attackBrain;
     private Transform target;
-    private float lastAttackTime = -999f;
+    private IEnemyAttack currentAttack;
     private float seed;
     private float speedMultiplier = 1f;
 
@@ -58,8 +65,42 @@ public class EnemyController : NetworkBehaviour
         enemyMovement = GetComponent<EnemyMovement>();
         enemyMovement.moveSpeed = moveSpeed;
         animator = GetComponent<Animator>();
+        attackBrain = GetComponent<EnemyAttackBrain>();
         seed = Random.value * 1000f;
         speedMultiplier = 0.9f + Random.value * 0.2f; // slight speed variation per enemy
+
+        // Fallback: si pas d'AttackBrain, en crée un et assigne les attaques
+        if (attackBrain == null)
+            attackBrain = gameObject.AddComponent<EnemyAttackBrain>();
+
+        if (attackBrain != null)
+        {
+            if (attackDefinitions.Count > 0)
+            {
+                attackBrain.SetAvailableAttacks(attackDefinitions);
+            }
+            else
+            {
+                // Crée une attaque mêlée par défaut
+                AttackDefinition defaultAttack = CreateDefaultMeleeAttack();
+                attackBrain.SetAvailableAttacks(new List<AttackDefinition> { defaultAttack });
+            }
+        }
+    }
+
+    private AttackDefinition CreateDefaultMeleeAttack()
+    {
+        AttackDefinition def = ScriptableObject.CreateInstance<AttackDefinition>();
+        def.attackType = AttackType.Cone;
+        def.damage = attackDamage;
+        def.cooldown = attackCooldown;
+        def.attackRange = attackRange;
+        def.areaRadius = 0.8f;
+        def.coneAngle = 90f;
+        def.windupTime = 0.2f;
+        def.recoveryTime = 0.1f;
+        def.knockbackForce = 2f;
+        return def;
     }
 
     public override void OnNetworkSpawn()
@@ -126,68 +167,90 @@ public class EnemyController : NetworkBehaviour
 
     private void UpdateState()
     {
-        if (target == null) { state = State.Idle; return; }
+        if (target == null) { state = State.Idle; enemyMovement.netMovement.Value = Vector2.zero; return; }
 
         float dist = Vector2.Distance(transform.position, target.position);
+        Vector2 toTarget = ((Vector2)target.position - (Vector2)transform.position).normalized;
 
-        if (dist <= attackRange)
-            state = State.Attack;
-        else
-            state = State.Chase;
-
-        if (state == State.Chase)
+        // Décide si on chasse ou on reste en place
+        // On tient compte de la portée max des attaques (ex: AuraPulse à grande portée)
+        float effectiveDetectionRange = Mathf.Max(detectionRange, GetMaxTriggerRange());
+        if (dist > effectiveDetectionRange)
         {
-            Vector2 toTarget = ((Vector2)target.position - (Vector2)transform.position).normalized;
-            // lateral jitter to try to block or flank the player
-            Vector2 perp = new Vector2(-toTarget.y, toTarget.x);
-            float jitter = Mathf.Sin(Time.time * 2f + seed) * blockIntensity;
-            Vector2 dir = (toTarget + perp * jitter).normalized;
-            enemyMovement.netMovement.Value = dir * speedMultiplier;
-        }
-        else
-        {
+            state = State.Idle;
             enemyMovement.netMovement.Value = Vector2.zero;
+            return;
         }
 
-        if (state == State.Attack && !enemyMovement.IsAttacking && Time.time >= lastAttackTime + attackCooldown)
-            StartCoroutine(AttackRoutine());
-    }
+        // On est en vue, soit on chasse soit on attaque
+        state = State.Chase;
 
-    private IEnumerator AttackRoutine()
-    {
-        enemyMovement.IsAttacking = true;
-        enemyMovement.netIsAttacking.Value = true;
-        enemyMovement.netMovement.Value = Vector2.zero;
-        lastAttackTime = Time.time;
-
-        yield return null;
-        while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.5f)
-            yield return null;
-
-        // Inflige les dégâts au joueur dans la direction visée
-        Vector2 dir = new Vector2(
-            animator.GetFloat("LastInputX"),
-            animator.GetFloat("LastInputY")
-        ).normalized;
-
-        int layerMask = playerLayer == 0 ? ~0 : (int)playerLayer;
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attackRange, layerMask);
-        foreach (var hit in hits)
+        // Essaye de lancer une attaque
+        if (attackBrain != null && currentAttack == null)
         {
-            Vector2 toTarget = ((Vector2)hit.transform.position - (Vector2)transform.position).normalized;
-            if (Vector2.Dot(dir, toTarget) > 0.3f)
+            var nearestPlayer = target.GetComponent<PlayerController>();
+            if (nearestPlayer == null)
+                nearestPlayer = target.GetComponentInParent<PlayerController>();
+
+            IEnemyAttack attack = attackBrain.SelectAttack(transform, toTarget, nearestPlayer);
+            if (attack != null)
             {
-                var player = hit.GetComponent<PlayerController>();
-                if (player != null)
-                    player.TakeDamage(attackDamage);
+                state = State.Attack;
+                currentAttack = attack;
+                enemyMovement.netMovement.Value = Vector2.zero;
+                attack.StartAttack(transform, toTarget, nearestPlayer);
+                StartCoroutine(WaitForAttackCompletion());
+                return;
             }
         }
 
-        while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
-            yield return null;
+        // Pas d'attaque possible, on chasse
+        // Stopping distance = plus petite attackRange parmi les attaques disponibles
+        float stoppingDist = attackBrain != null ? GetMinAttackRange() : attackRange;
+        if (dist <= stoppingDist * 0.85f)
+        {
+            enemyMovement.netMovement.Value = Vector2.zero;
+            return;
+        }
 
-        enemyMovement.IsAttacking = false;
-        enemyMovement.netIsAttacking.Value = false;
+        Vector2 perp = new Vector2(-toTarget.y, toTarget.x);
+        float jitter = Mathf.Sin(Time.time * 2f + seed) * blockIntensity;
+        Vector2 dir = (toTarget + perp * jitter).normalized;
+        enemyMovement.netMovement.Value = dir * speedMultiplier;
+    }
+
+    private IEnumerator WaitForAttackCompletion()
+    {
+        // Attend la vraie fin de la coroutine d'attaque dans le brain
+        yield return new WaitUntil(() => attackBrain == null || !attackBrain.IsExecutingAttack);
+        currentAttack = null;
+    }
+
+    private float GetMinAttackRange()
+    {
+        if (attackDefinitions == null || attackDefinitions.Count == 0)
+            return attackRange;
+        float min = float.MaxValue;
+        foreach (var def in attackDefinitions)
+            if (def != null && def.attackRange < min) min = def.attackRange;
+        return min == float.MaxValue ? attackRange : min;
+    }
+
+    private float GetMaxTriggerRange()
+    {
+        if (attackDefinitions == null || attackDefinitions.Count == 0)
+            return detectionRange;
+        float max = detectionRange;
+        foreach (var def in attackDefinitions)
+        {
+            if (def == null) continue;
+            // AuraPulse : areaRadius = trigger range
+            // RandomSpikes : attackRange peut être grand (lancer depuis loin)
+            // Autres : attackRange normal
+            float triggerRange = def.attackType == AttackType.AuraPulse ? def.areaRadius : def.attackRange;
+            if (triggerRange > max) max = triggerRange;
+        }
+        return max;
     }
 
     private IEnumerator DespawnAfterDelay()

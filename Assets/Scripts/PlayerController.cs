@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using Goblins.Data;
+using Goblins.Combat;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
@@ -30,7 +31,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float moveSpeed = 3f;
     [SerializeField] private float sprintMultiplier = 2f;
 
-    public float MoveSpeed => moveSpeed;
+    public float MoveSpeed { get => moveSpeed; set => moveSpeed = Mathf.Max(0f, value); }
     public float SprintMultiplier => sprintMultiplier;
 
     // Getters / setters for stats
@@ -475,21 +476,134 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    // Appelé par EnemyController (côté serveur)
+    // Appelé par EnemyController (côté serveur) - backward compat
     public void TakeDamage(float damage)
     {
         if (!IsServer) return;
-        // dodge check
+        HitData hitData = new HitData(damage, transform.position, transform.position);
+        ApplyHit(hitData);
+    }
+
+    /// <summary>
+    /// Applique un hit complet avec effets (dégâts, knockback, stun, etc).
+    /// À préférer à TakeDamage() qui n'applique que des dégâts.
+    /// </summary>
+    public void ApplyHit(HitData hitData)
+    {
+        if (!IsServer) return;
+
+        // Dodge check
         if (dodgeRate > 0f && Random.value < dodgeRate) return;
-        // apply defense reduction (minimum 1 damage)
-        float effective = Mathf.Max(1f, damage - defense);
+
+        // Apply defense reduction (min 0 — ne peut pas soigner le joueur)
+        float effective = Mathf.Max(0f, hitData.damage - defense);
         hp.Value = Mathf.Max(0f, hp.Value - effective);
-        // play hit animation on clients
+
+        // Play hit animation on clients
         PlayHitClientRpc();
+
+        // Apply knockback if present
+        if (hitData.knockbackForce > 0f && playerMovement != null)
+        {
+            Vector2 knockbackDir = hitData.knockbackDirection.normalized;
+            if (knockbackDir == Vector2.zero)
+                knockbackDir = ((Vector2)transform.position - hitData.sourcePosition).normalized;
+
+            playerMovement.ApplyKnockback(knockbackDir * hitData.knockbackForce);
+        }
+
+        // Apply effects (stun, slow, bleed, poison, etc)
+        if (hitData.effects != null && hitData.effects.Count > 0)
+        {
+            foreach (var effect in hitData.effects)
+            {
+                ApplyEffect(effect);
+            }
+        }
+
         if (hp.Value <= 0f)
         {
             netIsDead.Value = true;
             DieClientRpc();
+        }
+    }
+
+    private void ApplyEffect(AttackEffect effect)
+    {
+        switch (effect.effectType)
+        {
+            case AttackEffectType.Damage:
+                // Already applied above
+                break;
+            case AttackEffectType.Knockback:
+                // Already applied above
+                break;
+            case AttackEffectType.Slow:
+                if (playerMovement != null)
+                    StartCoroutine(ApplySlowCoroutine(effect.value, effect.duration));
+                break;
+            case AttackEffectType.Stun:
+                if (playerMovement != null)
+                    StartCoroutine(ApplyStunCoroutine(effect.duration));
+                break;
+            case AttackEffectType.Bleed:
+                // DoT: 50% damage per tick
+                StartCoroutine(ApplyDoTCoroutine(effect.value, effect.duration, 0.5f));
+                break;
+            case AttackEffectType.Poison:
+                // DoT: 30% damage per tick
+                StartCoroutine(ApplyDoTCoroutine(effect.value, effect.duration, 0.3f));
+                break;
+        }
+    }
+
+    private IEnumerator ApplySlowCoroutine(float slowPercent, float duration)
+    {
+        float originalSpeed = moveSpeed;
+        moveSpeed *= (1f - Mathf.Clamp01(slowPercent));
+        if (playerMovement != null)
+            playerMovement.moveSpeed = moveSpeed;
+
+        yield return new WaitForSeconds(duration);
+
+        moveSpeed = originalSpeed;
+        if (playerMovement != null)
+            playerMovement.moveSpeed = moveSpeed;
+    }
+
+    private IEnumerator ApplyStunCoroutine(float duration)
+    {
+        if (playerMovement == null) yield break;
+
+        bool wasControlled = playerMovement.enabled;
+        playerMovement.enabled = false;
+
+        yield return new WaitForSeconds(duration);
+
+        playerMovement.enabled = wasControlled;
+    }
+
+    private IEnumerator ApplyDoTCoroutine(float baseDamage, float duration, float percentPerTick)
+    {
+        float elapsed = 0f;
+        float tickInterval = 0.1f;
+
+        while (elapsed < duration && IsServer && !netIsDead.Value)
+        {
+            yield return new WaitForSeconds(tickInterval);
+            elapsed += tickInterval;
+
+            float tickDamage = baseDamage * percentPerTick;
+            float effective = Mathf.Max(1f, tickDamage - defense * 0.5f); // defense réduit DoT
+            hp.Value = Mathf.Max(0f, hp.Value - effective);
+            PlayHitClientRpc();
+
+            if (hp.Value <= 0f)
+            {
+                netIsDead.Value = true;
+                DieClientRpc();
+                break;
+            }
         }
     }
 

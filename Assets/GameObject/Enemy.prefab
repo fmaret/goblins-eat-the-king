@@ -291,6 +291,9 @@ MonoBehaviour:
   detectionRange: 5
   blockIntensity: 0.5
   despawnDelay: 5
+  attackDefinitions:
+  - {fileID: 11400000, guid: bd29c81eef22b49bd95412bf9e926c5d, type: 2}
+  debugAttackBrain: 1
   attackRange: 1.5
   attackDamage: 10
   attackCooldown: 1.5
@@ -323,3 +326,8 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+  netAttackAnimSpeed:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 1

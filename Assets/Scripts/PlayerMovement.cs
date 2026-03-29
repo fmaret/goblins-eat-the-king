@@ -17,9 +17,21 @@ public class PlayerMovement : NetworkBehaviour
     private NetworkVariable<bool> netIsSprinting = new NetworkVariable<bool>(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
+    // Knockback
+    private Vector2 knockbackVelocity = Vector2.zero;
+    private float knockbackDuration = 0f;
+    private float knockbackElapsed = 0f;
+
     // Accessible par PlayerController pour bloquer le mouvement pendant l'attaque
     public bool IsAttacking { get; set; }
     public bool IsSprinting => netIsSprinting.Value;
+
+    // Public accessor for movement speed (used by effects, etc)
+    public float moveSpeed
+    {
+        get => playerController != null ? playerController.MoveSpeed : 3f;
+        set { if (playerController != null) playerController.MoveSpeed = value; }
+    }
 
     void Awake()
     {
@@ -77,8 +89,21 @@ public class PlayerMovement : NetworkBehaviour
 
     void FixedUpdate()
     {
-        if (!IsOwner || IsAttacking) return;
+        if (!IsOwner) return;
         if (EscapeMenuManager.Instance != null && EscapeMenuManager.Instance.IsOpen) return;
+
+        // Apply knockback if active
+        if (knockbackElapsed < knockbackDuration)
+        {
+            float progress = knockbackElapsed / knockbackDuration;
+            float decayFactor = 1f - (progress * progress); // Quadratic decay
+            rb.linearVelocity = knockbackVelocity * decayFactor;
+            knockbackElapsed += Time.fixedDeltaTime;
+            return; // Skip normal movement during knockback
+        }
+
+        // Normal movement
+        if (IsAttacking) return;
         float baseSpeed = 3f;
         float mult = 2f;
         if (playerController != null)
@@ -98,5 +123,15 @@ public class PlayerMovement : NetworkBehaviour
             if (playerController.HasEndurance == false)
                 netIsSprinting.Value = false;
         }
+    }
+
+    /// <summary>
+    /// Applique un knockback au joueur (appelé côté serveur depuis PlayerController.ApplyHit).
+    /// </summary>
+    public void ApplyKnockback(Vector2 force)
+    {
+        knockbackVelocity = force;
+        knockbackDuration = 0.2f; // 200ms de knockback
+        knockbackElapsed = 0f;
     }
 }

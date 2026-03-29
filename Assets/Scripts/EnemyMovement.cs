@@ -15,6 +15,8 @@ public class EnemyMovement : NetworkBehaviour
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<bool> netIsAttacking = new NetworkVariable<bool>(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<float> netAttackAnimSpeed = new NetworkVariable<float>(
+        1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     // Accessible par EnemyController pour bloquer le mouvement
     public bool IsAttacking { get; set; }
@@ -33,6 +35,7 @@ public class EnemyMovement : NetworkBehaviour
 
         animator.SetBool("isMoving", isMoving);
         animator.SetBool("isAttacking", netIsAttacking.Value);
+        animator.speed = netIsAttacking.Value ? netAttackAnimSpeed.Value : 1f;
 
         if (isMoving)
         {

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f621df10f98a44ff8484aa998f96e8b, type: 3}
+  m_Name: Test
+  m_EditorClassIdentifier: Assembly-CSharp::Goblins.Combat.AttackDefinition
+  attackType: 1
+  damage: 5.1
+  cooldown: 1.5
+  weight: 1
+  attackRange: 5
+  areaRadius: 5
+  coneAngle: 360
+  windupTime: 10
+  recoveryTime: 0
+  animationClipDuration: 0.83
+  duration: 10
+  knockbackForce: 0
+  knockbackFromHit: 1
+  effects: []
+  auraPulseInterval: 0.1
+  auraPrefab: {fileID: 1770291777757890222, guid: 403018ae553c743afa435bc2cb5aed6c, type: 3}
+  spikeCount: 3
+  spikeHitRadius: 0.6
+  spikeDelay: 0.2
+  spikePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 5
+  projectilePattern: 0
+  projectileLifetime: 5
