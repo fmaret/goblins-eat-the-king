@@ -33,6 +33,6 @@ MonoBehaviour:
   spikeDelay: 2
   spikePrefab: {fileID: 2137881761359205907, guid: a32ff74ca24e2424e94803343d8d8dcb, type: 3}
   projectilePrefab: {fileID: 5390472714072643521, guid: 22c1321d1a7a3457aad2757115cec01d, type: 3}
-  projectileSpeed: 10
+  projectileSpeed: 12
   projectilePattern: 1
-  projectileLifetime: 5
+  projectileLifetime: 20

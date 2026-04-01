@@ -125,6 +125,19 @@ public class ProjectileHitComponent : MonoBehaviour
     {
         if (hasHit) return;
 
+        // Les dégâts ne sont appliqués que côté serveur pour éviter les doublons
+        if (Unity.Netcode.NetworkManager.Singleton != null && !Unity.Netcode.NetworkManager.Singleton.IsServer)
+        {
+            // Client pur : détruire le projectile visuellement au contact du joueur
+            var playerVisual = collision.GetComponent<PlayerController>();
+            if (playerVisual != null)
+            {
+                hasHit = true;
+                Destroy(gameObject);
+            }
+            return;
+        }
+
         var player = collision.GetComponent<PlayerController>();
         if (player != null)
         {

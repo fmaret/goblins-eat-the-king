@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 using System.Collections;
 using System.Collections.Generic;
 using Goblins.Combat;
@@ -166,7 +167,12 @@ public class EnemyAttackBrain : MonoBehaviour
 
             if (brain.debugLog) Debug.Log($"[EnemyAttackBrain] Finished '{def.name}' ({def.attackType})");
 
-            // Stop animation immédiatement après le hit
+            // Recovery : l'ennemi peut bouger mais ne peut pas relancer une attaque
+            // On garde isAttacking=true pendant la recovery pour que les clients voient toute l'animation
+            if (def.recoveryTime > 0f)
+                yield return new WaitForSeconds(def.recoveryTime);
+
+            // Stop animation une fois la recovery terminée
             if (brain.enemyMovement != null)
                 brain.enemyMovement.netIsAttacking.Value = false;
             if (brain.animator != null)
@@ -174,10 +180,6 @@ public class EnemyAttackBrain : MonoBehaviour
                 brain.animator.SetBool("isAttacking", false);
                 brain.animator.speed = 1f;
             }
-
-            // Recovery : l'ennemi peut bouger mais ne peut pas relancer une attaque
-            if (def.recoveryTime > 0f)
-                yield return new WaitForSeconds(def.recoveryTime);
 
             brain.IsExecutingAttack = false;
         }
@@ -211,10 +213,29 @@ public class EnemyAttackBrain : MonoBehaviour
 
         private IEnumerator ExecuteAuraPulse(Transform source)
         {
-            // Spawne l'effet visuel en enfant de l'ennemi
-            GameObject auraFx = null;
+            // Spawne l'aura comme NetworkObject pour que tous les clients la voient
+            NetworkObject auraNo = null;
             if (def.auraPrefab != null)
-                auraFx = Object.Instantiate(def.auraPrefab, source.position, Quaternion.identity, source);
+            {
+                var auraGo = Object.Instantiate(def.auraPrefab, source.position, Quaternion.identity);
+                auraNo = auraGo.GetComponent<NetworkObject>();
+
+                if (auraNo != null)
+                {
+                    // Définit la durée avant le Spawn (incluse dans le message initial)
+                    var networkAura = auraGo.GetComponent<NetworkAura>();
+                    if (networkAura != null) networkAura.SetLifetime(def.duration);
+
+                    auraNo.Spawn(destroyWithScene: true);
+                    // Parent à l'ennemi pour que l'aura le suive
+                    auraNo.TrySetParent(source, worldPositionStays: false);
+                }
+                else
+                {
+                    // Fallback si le prefab n'a pas de NetworkObject (visuel serveur seulement)
+                    auraGo.transform.SetParent(source);
+                }
+            }
 
             float elapsed = 0f;
             float lastPulse = -999f;
@@ -230,8 +251,9 @@ public class EnemyAttackBrain : MonoBehaviour
                 yield return null;
             }
 
-            // Détruit l'effet visuel à la fin
-            if (auraFx != null) Object.Destroy(auraFx);
+            // Dépawne l'aura à la fin (si elle n'a pas déjà auto-dépawné via NetworkAura.SetLifetime)
+            if (auraNo != null && auraNo.IsSpawned)
+                auraNo.Despawn();
         }
 
         // ── RandomSpikes ──────────────────────────────────────────────────
@@ -282,29 +304,31 @@ public class EnemyAttackBrain : MonoBehaviour
         {
             yield return new WaitForSeconds(def.windupTime);
 
-            if (def.projectilePrefab != null)
+            if (def.projectilePrefab == null) yield break;
+
+            Vector2 shootDir = def.projectilePattern == Goblins.Combat.ProjectilePattern.Straight
+                ? facingDir
+                : (target != null
+                    ? ((Vector2)target.transform.position - (Vector2)source.position).normalized
+                    : facingDir);
+
+            var projGo = Object.Instantiate(def.projectilePrefab, source.position, Quaternion.identity);
+            var netProj = projGo.GetComponent<NetworkProjectile>();
+            var no      = projGo.GetComponent<NetworkObject>();
+
+            if (netProj != null && no != null)
             {
-                Vector2 shootDir;
-                Transform homingTarget = null;
-                switch (def.projectilePattern)
-                {
-                    case Goblins.Combat.ProjectilePattern.Straight:
-                        shootDir = facingDir;
-                        break;
-                    case Goblins.Combat.ProjectilePattern.Targeted:
-                    default:
-                        shootDir = target != null
-                            ? ((Vector2)target.transform.position - (Vector2)source.position).normalized
-                            : facingDir;
-                        homingTarget = target != null ? target.transform : null;
-                        break;
-                }
-
-                GameObject proj = Object.Instantiate(def.projectilePrefab, source.position, Quaternion.identity);
-
-                ProjectileMover.Attach(proj, shootDir, def.projectileSpeed, def.projectileLifetime, homingTarget);
-
-                var hitComp = proj.GetComponent<ProjectileHitComponent>() ?? proj.AddComponent<ProjectileHitComponent>();
+                // Valeurs initiales définies AVANT Spawn : incluses dans le message de spawn initial
+                netProj.SetInitialValues(shootDir, def.projectileSpeed, def.projectileLifetime,
+                                         def.damage, def.knockbackForce, def.effects);
+                no.Spawn(destroyWithScene: true);
+            }
+            else
+            {
+                // Fallback si le prefab n'a pas de NetworkProjectile (visuel serveur seulement)
+                Transform homingTarget = target != null ? target.transform : null;
+                ProjectileMover.Attach(projGo, shootDir, def.projectileSpeed, def.projectileLifetime, homingTarget);
+                var hitComp = projGo.GetComponent<ProjectileHitComponent>() ?? projGo.AddComponent<ProjectileHitComponent>();
                 hitComp.Initialize(def.damage, def.knockbackForce, def.effects, def.projectileLifetime);
             }
         }
