@@ -67,8 +67,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Upgrades
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
-  m_sharedMaterial: {fileID: 5871331128988609200, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
+  m_sharedMaterial: {fileID: -4667264582810867158, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -688,8 +688,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Options (WIP)
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
-  m_sharedMaterial: {fileID: 5871331128988609200, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
+  m_sharedMaterial: {fileID: -4667264582810867158, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -827,8 +827,8 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
-  m_sharedMaterial: {fileID: 5871331128988609200, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
+  m_sharedMaterial: {fileID: -4667264582810867158, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -964,8 +964,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Quit
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
-  m_sharedMaterial: {fileID: 5871331128988609200, guid: 41f35cdd7165a44548b801b7cc47d054, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
+  m_sharedMaterial: {fileID: -4667264582810867158, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1101,8 +1101,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Goblins Eat the King
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: c69c51921693d4cdf80c9fa34201ed44, type: 2}
-  m_sharedMaterial: {fileID: -5950414735724384970, guid: c69c51921693d4cdf80c9fa34201ed44, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
+  m_sharedMaterial: {fileID: -4667264582810867158, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1126,8 +1126,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 150
-  m_fontSizeBase: 150
+  m_fontSize: 140
+  m_fontSizeBase: 140
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1739,6 +1739,10 @@ PrefabInstance:
     - target: {fileID: 9119113211398981718, guid: c0e954887b68f4064a9503384ff2f253, type: 3}
       propertyPath: m_Name
       value: JoinModal
+      objectReference: {fileID: 0}
+    - target: {fileID: 9119113211398981718, guid: c0e954887b68f4064a9503384ff2f253, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
