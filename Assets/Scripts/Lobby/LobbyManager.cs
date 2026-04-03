@@ -19,12 +19,40 @@ namespace Goblins.Lobby
     public class LobbyPlayer
     {
         public string name;
-        public Color color;
+        public Color color;      // Synchronisé avec ColorPalette[colorIndex]
+        public int colorIndex;   // Index dans LobbyManager.ColorPalette
+        public string clientIdStr = "0"; // ulong stocké en string pour la sérialisation JSON
+
+        public ulong ClientId
+        {
+            get => ulong.TryParse(clientIdStr, out var id) ? id : 0;
+            set => clientIdStr = value.ToString();
+        }
     }
 
     public class LobbyManager : NetworkBehaviour
     {
         public static LobbyManager Instance { get; private set; }
+
+        // ── Nom local persistant entre les scènes ────────────────────────────
+        /// <summary>Nom du joueur local sauvegardé avant le chargement de la scène de jeu.
+        /// Lu par PlayerController.OnNetworkSpawn pour afficher le vrai pseudo dans la GameUI.</summary>
+        public static string LocalPlayerName = "Player";
+
+        // ── Palette de couleurs disponibles ─────────────────────────────────────────────
+        public static readonly Color[] ColorPalette =
+        {
+            new Color(0.90f, 0.20f, 0.20f), // Rouge
+            new Color(0.20f, 0.45f, 0.90f), // Bleu
+            new Color(0.15f, 0.75f, 0.30f), // Vert
+            new Color(0.95f, 0.80f, 0.10f), // Jaune
+            new Color(0.65f, 0.20f, 0.90f), // Violet
+            new Color(0.95f, 0.50f, 0.10f), // Orange
+            new Color(0.90f, 0.40f, 0.70f), // Rose
+            new Color(0.15f, 0.80f, 0.85f), // Cyan
+        };
+        public static readonly string[] ColorNames =
+            { "Rouge", "Bleu", "Vert", "Jaune", "Violet", "Orange", "Rose", "Cyan" };
 
         [Header("Networking")]
         public bool useRelay = true;
@@ -57,7 +85,6 @@ namespace Goblins.Lobby
         }
 
         void Start() {
-            Debug.Log("[Lobby] Start: LobbyManager Start() called. active=" + gameObject.activeSelf + " enabled=" + enabled);
             // this.gameObject.SetActive(false);
             if (startGameButton != null)
             {
@@ -82,9 +109,7 @@ namespace Goblins.Lobby
                 if (!hasSentPlayerInfo)
                 {
                     hasSentPlayerInfo = true;
-
-                    var color = Color.white; // ou stocke le choix du joueur ailleurs
-                    RegisterPlayerInfoServerRpc("Player", color.r, color.g, color.b, color.a);
+                    RegisterPlayerInfoServerRpc(LocalPlayerName);
                 }
             }
 
@@ -113,15 +138,8 @@ namespace Goblins.Lobby
             }
         }
 
-        private void OnClientConnected(ulong clientId)
-        {
-            Debug.Log($"[Lobby] Network client connected: {clientId}");
-        }
-
-        private void OnClientDisconnected(ulong clientId)
-        {
-            Debug.Log($"[Lobby] Network client disconnected: {clientId}");
-        }
+        private void OnClientConnected(ulong clientId) { }
+        private void OnClientDisconnected(ulong clientId) { }
 
         public async void CreateLobby()
         {
@@ -145,11 +163,8 @@ namespace Goblins.Lobby
             lobbyCode = GenerateCode();
             lobbyCodeLabel.text = "Code : " + lobbyCode;
             players.Clear();
-            Debug.Log($"Lobby created with code {lobbyCode}, and players count {players.Count}");
-            // add host as first player placeholder
-            players.Add(new LobbyPlayer { name = "Host", color = Color.white });
+            players.Add(MakeLobbyPlayer("Host", 0, clientId: 0));
             OnPlayersChanged?.Invoke();
-            // broadcast state if we're server
             if (IsServer) BroadcastLobbyState();
             this.UpdateUI();
             // register in-editor so virtual players can join when using Multiplayer Play Mode
@@ -184,7 +199,7 @@ namespace Goblins.Lobby
                 lobbyCode = joinCode;
                 if (lobbyCodeLabel != null) lobbyCodeLabel.text = "Code : " + lobbyCode;
                 players.Clear();
-                players.Add(new LobbyPlayer { name = "Host", color = Color.white });
+                players.Add(MakeLobbyPlayer("Host", 0, clientId: 0));
                 OnPlayersChanged?.Invoke();
                 UpdateUI();
 
@@ -267,7 +282,8 @@ namespace Goblins.Lobby
 
             if (string.IsNullOrEmpty(lobbyCode)) return false;
             if (code != lobbyCode) return false;
-            players.Add(new LobbyPlayer { name = "Player", color = color });
+            // Trouve le premier colorIndex libre
+            players.Add(MakeLobbyPlayer("Player", FindFreeColorIndex()));
             OnPlayersChanged?.Invoke();
             if (IsServer) BroadcastLobbyState();
             return true;
@@ -277,10 +293,10 @@ namespace Goblins.Lobby
         {
             if (index >= 0 && index < players.Count)
             {
-                // If we're a client, ask server to update the player info for this client
+                // Si client : délègue au serveur via RPC
                 if (IsClient && !IsServer)
                 {
-                    RegisterPlayerInfoServerRpc(name, color.r, color.g, color.b, color.a);
+                    RequestNameChangeServerRpc(name);
                     return;
                 }
 
@@ -303,13 +319,73 @@ namespace Goblins.Lobby
             UpdateUI();
         }
 
-        // ServerRpc called by clients to register their player (name + color)
-        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-        public void RegisterPlayerInfoServerRpc(string name, float r, float g, float b, float a, RpcParams rpcParams = default)
+        // ── Helpers ──────────────────────────────────────────────────────────────────────
+
+        /// <summary>Crée un LobbyPlayer initialisé avec la couleur correspondante dans la palette.</summary>
+        private static LobbyPlayer MakeLobbyPlayer(string name, int colorIdx, ulong clientId = 0)
+            => new LobbyPlayer { name = name, colorIndex = colorIdx, color = ColorPalette[colorIdx], clientIdStr = clientId.ToString() };
+
+        /// <summary>Retourne le premier colorIndex libre (non utilisé par d'autres joueurs).
+        /// Si excludePlayerIndex >= 0, ce joueur est exclu de la recherche (utile pour le changement de couleur).</summary>
+        private int FindFreeColorIndex(int excludePlayerIndex = -1)
         {
-            var col = new Color(r, g, b, a);
-            Debug.Log($"RegisterPlayerInfoServerRpc from client {rpcParams.Receive.SenderClientId}: name={name} color={col}");
-            players.Add(new LobbyPlayer { name = name, color = col });
+            var taken = new HashSet<int>();
+            for (int i = 0; i < players.Count; i++)
+                if (i != excludePlayerIndex) taken.Add(players[i].colorIndex);
+            int idx = 0;
+            while (taken.Contains(idx) && idx < ColorPalette.Length - 1) idx++;
+            return idx;
+        }
+
+        // ServerRpc called by clients to register their player
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void RegisterPlayerInfoServerRpc(string name, RpcParams rpcParams = default)
+        {
+            ulong senderClientId = rpcParams.Receive.SenderClientId;
+            players.Add(MakeLobbyPlayer(name, FindFreeColorIndex(), clientId: senderClientId));
+            OnPlayersChanged?.Invoke();
+            BroadcastLobbyState();
+        }
+
+        /// <summary>Le joueur demande à cycler sa couleur d'un pas (+1 droite / -1 gauche).
+        /// Le serveur saute automatiquement les couleurs déjà prises par les autres joueurs.</summary>
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void RequestColorChangeServerRpc(int direction, RpcParams rpcParams = default)
+        {
+            ulong senderClientId = rpcParams.Receive.SenderClientId;
+            int idx = players.FindIndex(p => p.ClientId == senderClientId);
+            if (idx < 0) return;
+
+            // Indices pris par les AUTRES joueurs
+            var takenColor = new HashSet<int>();
+            for (int i = 0; i < players.Count; i++)
+                if (i != idx) takenColor.Add(players[i].colorIndex);
+
+            // Cherche la prochaine couleur disponible dans la direction donnée
+            int newColorIndex = players[idx].colorIndex;
+            int attempts = 0;
+            do
+            {
+                newColorIndex = ((newColorIndex + direction) % ColorPalette.Length + ColorPalette.Length) % ColorPalette.Length;
+                attempts++;
+            }
+            while (takenColor.Contains(newColorIndex) && attempts < ColorPalette.Length);
+
+            players[idx].colorIndex = newColorIndex;
+            players[idx].color = ColorPalette[newColorIndex];
+            OnPlayersChanged?.Invoke();
+            BroadcastLobbyState();
+        }
+
+        /// <summary>Le joueur demande à changer son pseudo.</summary>
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        public void RequestNameChangeServerRpc(string name, RpcParams rpcParams = default)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return;
+            ulong senderClientId = rpcParams.Receive.SenderClientId;
+            int idx = players.FindIndex(p => p.ClientId == senderClientId);
+            if (idx < 0) return;
+            players[idx].name = name;
             OnPlayersChanged?.Invoke();
             BroadcastLobbyState();
         }
@@ -318,7 +394,6 @@ namespace Goblins.Lobby
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void RequestLobbyStateServerRpc(RpcParams rpcParams = default)
         {
-            Debug.Log($"RequestLobbyStateServerRpc from client {rpcParams.Receive.SenderClientId}");
             var state = new LobbyState { code = lobbyCode, players = players };
             string json = JsonUtility.ToJson(state);
             var clientParams = new ClientRpcParams
@@ -332,7 +407,6 @@ namespace Goblins.Lobby
         public void BroadcastLobbyState()
         {
             if (!IsServer) return;
-            Debug.Log($"BroadcastLobbyState: code={lobbyCode} playersCount={players?.Count}");
             var state = new LobbyState { code = lobbyCode, players = players };
             string json = JsonUtility.ToJson(state);
             UpdateClientLobbyStateClientRpc(json);
@@ -341,7 +415,6 @@ namespace Goblins.Lobby
         [ClientRpc]
         void UpdateClientLobbyStateClientRpc(string json, ClientRpcParams clientRpcParams = default)
         {
-            Debug.Log($"UpdateClientLobbyStateClientRpc received on client. jsonLen={json?.Length}");
             var state = JsonUtility.FromJson<LobbyState>(json);
             if (state == null)
             {
@@ -350,7 +423,17 @@ namespace Goblins.Lobby
             }
             lobbyCode = state.code;
             players = state.players ?? new List<LobbyPlayer>();
-            Debug.Log($"Client updated lobby state: code={lobbyCode} playersCount={players.Count}");
+
+            // Garde LocalPlayerName toujours en phase avec le serveur pour tous les clients
+            // (host ET clients), sans attendre StartGameWithMusicFade.
+            if (NetworkManager.Singleton != null)
+            {
+                ulong localId = NetworkManager.Singleton.LocalClientId;
+                var localPlayer = players.Find(p => p.ClientId == localId);
+                if (localPlayer != null && !string.IsNullOrWhiteSpace(localPlayer.name))
+                    LocalPlayerName = localPlayer.name;
+            }
+
             OnPlayersChanged?.Invoke();
             UpdateUI();
         }
@@ -362,7 +445,6 @@ namespace Goblins.Lobby
 
         private System.Collections.IEnumerator StartGameWithMusicFade()
         {
-            Debug.Log("Starting game with music fade...");
             var sound = SoundManager.Instance;
             if (sound != null)
             {
@@ -370,55 +452,55 @@ namespace Goblins.Lobby
                 yield return new WaitForSeconds(sound.FadeDuration);
             }
 
+            // Sauvegarde finale du pseudo local avant le changement de scène
+            // (UpdateClientLobbyStateClientRpc le maintient à jour en continu ; cette
+            // sauvegarde sert de filet de sécurité, notamment pour le host.)
+            if (NetworkManager.Singleton != null)
+            {
+                ulong localId = NetworkManager.Singleton.LocalClientId;
+                var localPlayer = players.Find(p => p.ClientId == localId);
+                if (localPlayer != null && !string.IsNullOrWhiteSpace(localPlayer.name))
+                    LocalPlayerName = localPlayer.name;
+            }
+
             if (NetworkManager.Singleton != null)
             {
                 if (NetworkManager.Singleton.IsServer)
-                {
                     NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
-                    Debug.Log("Host started game scene: " + gameSceneName);
-                }
                 else
-                {
-                    Debug.LogWarning("Only the host can start the game. Current client cannot request scene load.");
-                }
+                    Debug.LogWarning("Only the host can start the game.");
             }
             else
             {
                 SceneManager.LoadScene(gameSceneName);
-                Debug.Log("Loaded scene locally: " + gameSceneName);
             }
             gameObject.SetActive(false);
-            Debug.Log("LobbyManager deactivated after starting game.");
         }
         
-        public void UpdateUI() {
-            Debug.Log("Updating lobby UI...");
-            if (playersContainer == null)
-            {
-                Debug.LogWarning("LobbyManager.UpdateUI: playersContainer not assigned");
-                return;
-            }
+        public void UpdateUI()
+        {
+            if (playersContainer == null) return;
 
-            // clear existing children
-            Debug.Log($"Updating lobby UI with {players.Count} players");
             for (int i = playersContainer.childCount - 1; i >= 0; i--)
             {
                 var c = playersContainer.GetChild(i);
                 if (Application.isPlaying) Destroy(c.gameObject);
                 else DestroyImmediate(c.gameObject);
             }
-            Debug.Log($"Cleared existing player UI elements. Remaining children: {playersContainer.childCount}");
-            Debug.Log($"Players to display: {players.Count}");
             foreach (var p in players)
             {
-                GameObject go = Instantiate(LobbyPlayerSelectionPrefab, playersContainer);
-                // try to set simple text/image if prefab has components
-                var tmp = go.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-                if (tmp != null) tmp.text = p.name;
-                var img = go.GetComponentInChildren<UnityEngine.UI.Image>();
-                if (img != null) img.color = p.color;
+                var go = Instantiate(LobbyPlayerSelectionPrefab, playersContainer);
+                var sel = go.GetComponent<LobbyPlayerSelection>();
+                if (sel != null)
+                    sel.Initialize(p.ClientId, p.name, p.colorIndex);
+                else
+                {
+                    var tmp = go.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+                    if (tmp != null) tmp.text = p.name;
+                    var img = go.GetComponentInChildren<UnityEngine.UI.Image>();
+                    if (img != null) img.color = p.color;
+                }
             }
-            Debug.Log($"Finished updating lobby UI. Total children: {playersContainer.childCount}");
         }
     }
 }

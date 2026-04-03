@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Collections;
 using Goblins.Data;
 using Goblins.Combat;
 using UnityEngine;
@@ -106,6 +107,10 @@ public class PlayerController : NetworkBehaviour
     private NetworkVariable<bool> netIsDead = new NetworkVariable<bool>(
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    /// <summary>Pseudo du joueur, écrit par l'Owner au spawn, synchronisé sur tous les clients.</summary>
+    private NetworkVariable<FixedString64Bytes> netPlayerName = new NetworkVariable<FixedString64Bytes>(
+        default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     void Awake()
     {
         animator = GetComponent<Animator>();
@@ -181,14 +186,16 @@ public class PlayerController : NetworkBehaviour
         mp.OnValueChanged += OnMpChanged;
         endurance.OnValueChanged += OnEnduranceChanged;
         netIsDead.OnValueChanged += (oldV, newV) => { if (newV) animator?.SetTrigger("Die"); };
-        // register in GameUI header for all clients
+        netPlayerName.OnValueChanged += OnPlayerNameChanged;
+
+        // L'owner définit son pseudo dès le spawn (synchronisé vers tous les clients via NetworkVariable)
+        if (IsOwner)
+            netPlayerName.Value = new FixedString64Bytes(GetDisplayName());
+
         if (GameUI.Instance != null)
-            GameUI.Instance.AddPlayerEntry(OwnerClientId, $"Player {OwnerClientId}");
+            RegisterInGameUI();
         else
             StartCoroutine(RegisterWithUI());
-        UpdateHealthBar();
-        UpdateManaBar();
-        UpdateEnduranceBar();
     }
 
     public override void OnNetworkDespawn()
@@ -196,6 +203,7 @@ public class PlayerController : NetworkBehaviour
         hp.OnValueChanged -= OnHpChanged;
         mp.OnValueChanged -= OnMpChanged;
         endurance.OnValueChanged -= OnEnduranceChanged;
+        netPlayerName.OnValueChanged -= OnPlayerNameChanged;
         if (GameUI.Instance != null)
             GameUI.Instance.RemovePlayerEntry(OwnerClientId);
     }
@@ -672,18 +680,60 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    private void OnPlayerNameChanged(FixedString64Bytes oldName, FixedString64Bytes newName)
+    {
+        if (GameUI.Instance != null)
+            GameUI.Instance.RenamePlayerEntry(OwnerClientId, newName.ToString());
+    }
+
+    /// <summary>Retourne le pseudo à afficher : LocalPlayerName pour l'owner, netPlayerName pour les autres.</summary>
+    private string GetDisplayName()
+    {
+        if (IsOwner)
+        {
+            string name = Goblins.Lobby.LobbyManager.LocalPlayerName;
+            return string.IsNullOrWhiteSpace(name) ? $"Player {OwnerClientId}" : name;
+        }
+        return netPlayerName.Value.IsEmpty ? $"Player {OwnerClientId}" : netPlayerName.Value.ToString();
+    }
+
+    /// <summary>Crée l'entrée joueur dans le GameUI et pousse les valeurs de stats initiales.</summary>
+    private void RegisterInGameUI()
+    {
+        if (GameUI.Instance == null) return;
+        string name = GetDisplayName();
+        GameUI.Instance.AddPlayerEntry(OwnerClientId, name);
+        GameUI.Instance.RenamePlayerEntry(OwnerClientId, name);
+        UpdateHealthBar();
+        UpdateManaBar();
+        UpdateEnduranceBar();
+    }
+
     private IEnumerator RegisterWithUI()
     {
-        float waited = 0f;
-        const float timeout = 5f;
-        while (GameUI.Instance == null && waited < timeout)
+        // L'objet joueur NGO persiste à travers les transitions de scène (pas de despawn/respawn).
+        // On attend que GameUI soit disponible (chargement de la scène de jeu) sans timeout fixe.
+        // On s'arrête seulement si l'objet est réellement dépawn (fin de session réseau).
+        while (GameUI.Instance == null && IsSpawned)
+            yield return null;
+
+        if (!IsSpawned || GameUI.Instance == null) yield break;
+
+        // Pour l'owner : re-lire LocalPlayerName sauvegardé avant le chargement de scène,
+        // pour récupérer le pseudo définitif tapé dans le lobby après le spawn initial.
+        if (IsOwner)
         {
-            waited += Time.deltaTime;
+            string finalName = GetDisplayName();
+            if (netPlayerName.Value.ToString() != finalName)
+                netPlayerName.Value = new FixedString64Bytes(finalName);
+        }
+        else if (netPlayerName.Value.IsEmpty)
+        {
+            // Attendre un frame si la NetworkVariable n'est pas encore synchronisée (rare)
             yield return null;
         }
 
-        if (GameUI.Instance != null)
-            GameUI.Instance.AddPlayerEntry(OwnerClientId, $"Player {OwnerClientId}");
+        RegisterInGameUI();
     }
 
     private IEnumerator AttackRoutine()

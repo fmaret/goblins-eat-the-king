@@ -34,7 +34,6 @@ public class Lobby : MonoBehaviour
         }
 
         var clients = NetworkManager.Singleton.ConnectedClientsList;
-        int idx = 0;
         foreach (var client in clients)
         {
             var go = Instantiate(playerSelectionPrefab, playersSelectionParentContainer);
@@ -53,9 +52,7 @@ public class Lobby : MonoBehaviour
 
             if (selectionComp != null)
             {
-                selectionComp.SetIndex(idx);
-                selectionComp.SetName(displayName);
-                selectionComp.SetColor(displayColor);
+                selectionComp.Initialize(client.ClientId, displayName, 0);
             }
             else
             {
@@ -70,8 +67,6 @@ public class Lobby : MonoBehaviour
                 var img = go.GetComponentInChildren<Image>();
                 if (img != null) img.color = displayColor;
             }
-
-            idx++;
         }
 
         // Force layout rebuild so UI updates immediately

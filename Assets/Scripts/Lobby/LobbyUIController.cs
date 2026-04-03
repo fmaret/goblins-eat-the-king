@@ -14,18 +14,12 @@ public class LobbyUIController : MonoBehaviour
     public Button colorCycleButton;
     public TextMeshProUGUI colorLabel;
 
-    private int colorIndex = 0;
-    private List<Color> colors = new List<Color> { Color.white, Color.red, Color.blue, Color.green, Color.yellow };
-
     void Start()
     {
         if (LobbyManager.Instance != null)
-        {
             LobbyManager.Instance.OnPlayersChanged += RefreshPlayers;
-        }
 
         if (colorCycleButton != null) colorCycleButton.onClick.AddListener(CycleColor);
-        UpdateColorLabel();
         RefreshPlayers();
     }
 
@@ -42,36 +36,34 @@ public class LobbyUIController : MonoBehaviour
         if (playersContainer == null || playerItemPrefab == null || LobbyManager.Instance == null) return;
         for (int i = playersContainer.childCount - 1; i >= 0; i--) Destroy(playersContainer.GetChild(i).gameObject);
 
-        int idx = 0;
         foreach (var p in LobbyManager.Instance.players)
         {
             var go = Instantiate(playerItemPrefab, playersContainer);
-            var txt = go.GetComponentInChildren<TextMeshProUGUI>();
-            if (txt != null) txt.text = p.name;
-            var img = go.GetComponentInChildren<Image>();
-            if (img != null) img.color = p.color;
-            idx++;
+            var sel = go.GetComponent<LobbyPlayerSelection>();
+            if (sel != null)
+                sel.Initialize(p.ClientId, p.name, p.colorIndex);
+            else
+            {
+                var txt = go.GetComponentInChildren<TextMeshProUGUI>();
+                if (txt != null) txt.text = p.name;
+                var img = go.GetComponentInChildren<Image>();
+                if (img != null) img.color = p.color;
+            }
         }
     }
 
     void CycleColor()
     {
-        colorIndex = (colorIndex + 1) % colors.Count;
-        UpdateColorLabel();
+        if (LobbyManager.Instance != null)
+            LobbyManager.Instance.RequestColorChangeServerRpc(1);
     }
 
-    void UpdateColorLabel()
-    {
-        if (colorLabel != null) colorLabel.text = colors[colorIndex].ToString();
-    }
-
-    // apply local name/color for first available slot (host is index 0)
+    // apply local name for the local player
     public void ApplyLocalInfo()
     {
         if (LobbyManager.Instance == null) return;
         string name = nameInput != null ? nameInput.text : "Player";
-        Color col = colors[colorIndex];
-        int index = LobbyManager.Instance.players.Count > 0 ? 0 : 0;
-        LobbyManager.Instance.SetLocalPlayerInfo(index, name, col);
+        if (!string.IsNullOrWhiteSpace(name))
+            LobbyManager.Instance.RequestNameChangeServerRpc(name);
     }
 }

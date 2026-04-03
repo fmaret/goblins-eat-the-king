@@ -983,6 +983,7 @@ GameObject:
   - component: {fileID: 8742470262732229516}
   - component: {fileID: 4323833875329158773}
   - component: {fileID: 4184473544269021165}
+  - component: {fileID: -513465590270189974}
   m_Layer: 5
   m_Name: LobbyPlayerSelection
   m_TagString: Untagged
@@ -1075,6 +1076,24 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &-513465590270189974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7645171604633060990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: febe0976cd4764de485b80a1b3b8cbaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LobbyPlayerSelection
+  nameInput: {fileID: 5143668296284506274}
+  prevColorButton: {fileID: 6999357901618395129}
+  nextColorButton: {fileID: 5578318328364290207}
+  colorNameLabel: {fileID: 0}
+  colorPreview: {fileID: 1243769426859939796}
+  youLabel: {fileID: 0}
 --- !u!1 &8576402474743565930
 GameObject:
   m_ObjectHideFlags: 0

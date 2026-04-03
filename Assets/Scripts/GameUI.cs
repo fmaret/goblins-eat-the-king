@@ -29,17 +29,8 @@ private Dictionary<ulong, PlayerInfo> playerEntries = new Dictionary<ulong, Play
 
 	void Start()
 	{
-		// Do not auto-disable the GameUI on Start; keep the singleton active so
-		// it remains visible after scene transitions (it is marked DontDestroyOnLoad).
-		// Visibility will be managed by connection callbacks.
-		// populate existing connected clients
-		if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
-		{
-			foreach (var kv in NetworkManager.Singleton.ConnectedClients)
-			{
-				AddPlayerEntry(kv.Key, $"Player {kv.Key}");
-			}
-		}
+		// Les entrées joueurs sont créées uniquement par PlayerController.OnNetworkSpawn
+		// avec le vrai nom — on ne pré-remplit plus avec "Player X" ici.
 	}
 
 	void OnEnable()
@@ -65,9 +56,7 @@ private Dictionary<ulong, PlayerInfo> playerEntries = new Dictionary<ulong, Play
 		if (NetworkManager.Singleton == null) return;
 		if (clientId == NetworkManager.Singleton.LocalClientId)
 			gameObject.SetActive(false);
-
-		if (!playerEntries.ContainsKey(clientId))
-			AddPlayerEntry(clientId, $"Player {clientId}");
+		// Ne pas créer d'entrée ici : PlayerController.OnNetworkSpawn le fera avec le vrai nom
 	}
 
 	private void OnClientDisconnected(ulong clientId)
@@ -113,11 +102,24 @@ public void SetPlayerHealth(float current, float max, string text = null)
 			info.SetMana(1f, 1f, "");
 			info.SetEndurance(1f, 1f, "");
 			playerEntries.Add(clientId, info);
+			ReorderEntries();
 		}
 		else
 		{
 			Debug.LogWarning("GameUI: prefab missing PlayerInfo component");
 			Destroy(go);
+		}
+	}
+
+	/// <summary>Réordonne les entrées dans le conteneur par clientId croissant (host 0 en premier).</summary>
+	private void ReorderEntries()
+	{
+		var sorted = new List<ulong>(playerEntries.Keys);
+		sorted.Sort();
+		for (int i = 0; i < sorted.Count; i++)
+		{
+			if (playerEntries.TryGetValue(sorted[i], out var info) && info != null)
+				info.transform.SetSiblingIndex(i);
 		}
 	}
 
@@ -128,34 +130,27 @@ public void SetPlayerHealth(float current, float max, string text = null)
 		playerEntries.Remove(clientId);
 	}
 
+	public void RenamePlayerEntry(ulong clientId, string name)
+	{
+		if (playerEntries.TryGetValue(clientId, out var info) && info != null)
+			info.SetName(name);
+	}
+
 	public void SetPlayerEntryHealth(ulong clientId, float current, float max, string text = null)
 	{
-		if (!playerEntries.TryGetValue(clientId, out var info))
-		{
-			AddPlayerEntry(clientId, $"Player {clientId}");
-			playerEntries.TryGetValue(clientId, out info);
-		}
-
-		if (info != null) info.SetHealth(current, max, text);
+		if (playerEntries.TryGetValue(clientId, out var info) && info != null)
+			info.SetHealth(current, max, text);
 	}
 
 	public void SetPlayerEntryMana(ulong clientId, float current, float max, string text = null)
 	{
-		if (!playerEntries.TryGetValue(clientId, out var info))
-		{
-			AddPlayerEntry(clientId, $"Player {clientId}");
-			playerEntries.TryGetValue(clientId, out info);
-		}
-		if (info != null) info.SetMana(current, max, text);
+		if (playerEntries.TryGetValue(clientId, out var info) && info != null)
+			info.SetMana(current, max, text);
 	}
 
 	public void SetPlayerEntryEndurance(ulong clientId, float current, float max, string text = null)
 	{
-		if (!playerEntries.TryGetValue(clientId, out var info))
-		{
-			AddPlayerEntry(clientId, $"Player {clientId}");
-			playerEntries.TryGetValue(clientId, out info);
-		}
-		if (info != null) info.SetEndurance(current, max, text);
+		if (playerEntries.TryGetValue(clientId, out var info) && info != null)
+			info.SetEndurance(current, max, text);
 	}
 }
