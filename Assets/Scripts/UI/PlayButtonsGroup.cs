@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
 using Goblins.Lobby;
+using TMPro;
+using Goblins.Localization;
 
 public class PlayButtonsGroup : MonoBehaviour
 {
@@ -34,7 +36,32 @@ public class PlayButtonsGroup : MonoBehaviour
         Debug.Log($"PlayButtonsGroup.Awake: lobbyPanel={(lobbyPanel!=null)}, joinModal={(joinModal!=null)}");
     }
 
-    void Start() {
+    void Start()
+    {
+        if (LocalizationManager.Instance != null)
+            LocalizationManager.Instance.OnLanguageChanged += LocalizeUI;
+        LocalizeUI();
+    }
+
+    void OnDestroy()
+    {
+        if (LocalizationManager.Instance != null)
+            LocalizationManager.Instance.OnLanguageChanged -= LocalizeUI;
+    }
+
+    void LocalizeUI()
+    {
+        var lm = LocalizationManager.Instance;
+        if (lm == null) return;
+        SetButtonText(hostButton, lm.Translate("Host"));
+        SetButtonText(joinButton, lm.Translate("Join"));
+    }
+
+    static void SetButtonText(Button btn, string text)
+    {
+        if (btn == null) return;
+        var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
+        if (tmp != null) tmp.text = text;
     }
 
     void OnHostClicked()

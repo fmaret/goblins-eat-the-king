@@ -22,7 +22,16 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
+        OptionsMenuController.ApplySavedSettings();
         if (SoundManager.Instance != null) SoundManager.Instance.PlayMenuMusic();
+        if (LocalizationManager.Instance != null)
+            LocalizationManager.Instance.OnLanguageChanged += LocalizeButtons;
+    }
+
+    void OnDestroy()
+    {
+        if (LocalizationManager.Instance != null)
+            LocalizationManager.Instance.OnLanguageChanged -= LocalizeButtons;
     }
 
     void Awake()
@@ -65,6 +74,7 @@ public class MainMenuController : MonoBehaviour
         if (lobbyPanel != null) lobbyPanel.SetActive(false);
         if (joinModal != null) joinModal.SetActive(false);
         if (upgradesPanel != null) upgradesPanel.SetActive(false);
+        if (optionsPanel != null) optionsPanel.SetActive(false);
     }
 
     Button FindButton(string name)

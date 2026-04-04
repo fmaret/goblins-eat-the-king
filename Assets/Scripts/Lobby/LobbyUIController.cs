@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Goblins.Lobby;
+using Goblins.Localization;
 
 public class LobbyUIController : MonoBehaviour
 {
@@ -18,7 +19,8 @@ public class LobbyUIController : MonoBehaviour
     {
         if (LobbyManager.Instance != null)
             LobbyManager.Instance.OnPlayersChanged += RefreshPlayers;
-
+        if (LocalizationManager.Instance != null)
+            LocalizationManager.Instance.OnLanguageChanged += RefreshPlayers;
         if (colorCycleButton != null) colorCycleButton.onClick.AddListener(CycleColor);
         RefreshPlayers();
     }
@@ -26,12 +28,17 @@ public class LobbyUIController : MonoBehaviour
     void OnDestroy()
     {
         if (LobbyManager.Instance != null) LobbyManager.Instance.OnPlayersChanged -= RefreshPlayers;
+        if (LocalizationManager.Instance != null) LocalizationManager.Instance.OnLanguageChanged -= RefreshPlayers;
     }
 
     public void RefreshPlayers()
     {
         if (lobbyCodeLabel != null && LobbyManager.Instance != null)
-            lobbyCodeLabel.text = "Code: " + LobbyManager.Instance.lobbyCode;
+        {
+            var lm = LocalizationManager.Instance;
+            string prefix = lm != null ? lm.Translate("LobbyCode") : "Code";
+            lobbyCodeLabel.text = prefix + ": " + LobbyManager.Instance.lobbyCode;
+        }
 
         if (playersContainer == null || playerItemPrefab == null || LobbyManager.Instance == null) return;
         for (int i = playersContainer.childCount - 1; i >= 0; i--) Destroy(playersContainer.GetChild(i).gameObject);

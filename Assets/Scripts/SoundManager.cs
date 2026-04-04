@@ -26,6 +26,25 @@ public class SoundManager : MonoBehaviour
     private int _poolIndex;
     private AudioSource _musicSource;
     private Coroutine _fadeCoroutine;
+    private float _sfxVolume = 1f;
+
+    // ── Volume API ────────────────────────────────────────────────────────────
+    /// <summary>Volume actuel de la musique (cible des fades).</summary>
+    public float MusicVolume => musicVolume;
+
+    /// <summary>Volume actuel des effets sonores (multiplicateur).</summary>
+    public float SfxVolume => _sfxVolume;
+
+    /// <summary>Change le volume de la musique en temps réel.</summary>
+    public void SetMusicVolume(float v)
+    {
+        musicVolume = Mathf.Clamp01(v);
+        if (_musicSource != null && _musicSource.isPlaying)
+            _musicSource.volume = musicVolume;
+    }
+
+    /// <summary>Change le multiplicateur de volume pour tous les SFX.</summary>
+    public void SetSfxVolume(float v) => _sfxVolume = Mathf.Clamp01(v);
 
     private void Awake()
     {
@@ -42,19 +61,20 @@ public class SoundManager : MonoBehaviour
     public void Play(AudioClip clip, float volume = 1f)
     {
         if (clip == null) return;
+        float vol = volume * _sfxVolume;
 
         for (int i = 0; i < _pool.Length; i++)
         {
             int idx = (_poolIndex + i) % _pool.Length;
             if (!_pool[idx].isPlaying)
             {
-                PlayOnSource(_pool[idx], clip, volume);
+                PlayOnSource(_pool[idx], clip, vol);
                 _poolIndex = (idx + 1) % _pool.Length;
                 return;
             }
         }
 
-        PlayOnSource(_pool[_poolIndex], clip, volume);
+        PlayOnSource(_pool[_poolIndex], clip, vol);
         _poolIndex = (_poolIndex + 1) % _pool.Length;
     }
 

@@ -22,6 +22,9 @@ namespace Goblins.Localization
     {
         public static LocalizationManager Instance { get; private set; }
 
+        /// <summary>Fired after the language is changed and the dictionary is reloaded.</summary>
+        public event Action OnLanguageChanged;
+
         public string language = "fr"; // default to French for quick dev
 
         private Dictionary<string, string> dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -61,42 +64,11 @@ namespace Goblins.Localization
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"Localization load error: {e.Message}");
+                Debug.LogWarning($"Localization load error for '{language}': {e.Message}");
             }
 
-            // fallback minimal defaults
-            LoadDefaults();
-        }
-
-        void LoadDefaults()
-        {
-            dict.Clear();
-            if (language == "fr")
-            {
-                dict["AllPlayers"] = "Tous les joueurs";
-                dict["PlayerFormat"] = "Joueur {0}";
-                dict["TYPE_UPGRADE"] = "Bonus";
-                dict["TYPE_DOWNGRADE"] = "Malus";
-                dict["HP"] = "PV";
-                dict["MP"] = "PM";
-                dict["SPEED"] = "Vitesse";
-                dict["ATTACK"] = "Attaque";
-                dict["DEFENSE"] = "Défense";
-                dict["CRITICAL_RATE"] = "Taux critique";
-            }
-            else
-            {
-                dict["AllPlayers"] = "All Players";
-                dict["PlayerFormat"] = "Player {0}";
-                dict["TYPE_UPGRADE"] = "Upgrade";
-                dict["TYPE_DOWNGRADE"] = "Downgrade";
-                dict["HP"] = "HP";
-                dict["MP"] = "MP";
-                dict["SPEED"] = "Speed";
-                dict["ATTACK"] = "Attack";
-                dict["DEFENSE"] = "Defense";
-                dict["CRITICAL_RATE"] = "Critical Rate";
-            }
+            // Les fichiers JSON sont la source de vérité — on ne met pas de fallback hardcodé.
+            Debug.LogWarning($"[Localization] Could not load 'Resources/Localization/localization_{language}.json'");
         }
 
         public string Translate(string key, params object[] args)
@@ -125,6 +97,8 @@ namespace Goblins.Localization
         public void SetLanguage(string lang)
         {
             LoadFromResources(lang);
+            Debug.Log($"[Localization] Language set to '{language}' ({dict.Count} entries)");
+            OnLanguageChanged?.Invoke();
         }
     }
 }

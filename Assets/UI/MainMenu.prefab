@@ -686,7 +686,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Options (WIP)
+  m_text: Options
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
   m_sharedMaterial: {fileID: -4667264582810867158, guid: 4e731bf848cd141c2aa7a932455f8b42, type: 2}
@@ -1294,7 +1294,7 @@ MonoBehaviour:
   optionsButton: {fileID: 2424060862515126019}
   upgradesButton: {fileID: 6582143283530023000}
   quitButton: {fileID: 6221593886873935329}
-  optionsPanel: {fileID: 0}
+  optionsPanel: {fileID: 1058799215595800219, guid: 9c643d6a2dd1849d580a292869f14a34, type: 3}
   playButtonsGroup: {fileID: 4237142232031201391}
   upgradesPanel: {fileID: 0}
   lobbyPanel: {fileID: 1543146592471135379, guid: 82cb028a256aa43c591934e47bdf8243, type: 3}

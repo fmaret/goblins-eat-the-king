@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
+using TMPro;
+using Goblins.Localization;
 
 public class EscapeMenuManager : MonoBehaviour
 {
@@ -34,27 +36,37 @@ public class EscapeMenuManager : MonoBehaviour
     {
         if (menuPanel != null) menuPanel.SetActive(false);
         IsOpen = false;
-        // Wire up button callbacks if assigned
-        if (resumeButton != null)
-        {
-            resumeButton.onClick.RemoveAllListeners();
-            resumeButton.onClick.AddListener(Close);
-        }
-        if (optionsButton != null)
-        {
-            optionsButton.onClick.RemoveAllListeners();
-            optionsButton.onClick.AddListener(OnOptionsClicked);
-        }
-        if (mainMenuButton != null)
-        {
-            mainMenuButton.onClick.RemoveAllListeners();
-            mainMenuButton.onClick.AddListener(GoToMainMenu);
-        }
-        if (quitButton != null)
-        {
-            quitButton.onClick.RemoveAllListeners();
-            quitButton.onClick.AddListener(QuitGame);
-        }
+        if (resumeButton    != null) { resumeButton.onClick.RemoveAllListeners();    resumeButton.onClick.AddListener(Close); }
+        if (optionsButton   != null) { optionsButton.onClick.RemoveAllListeners();   optionsButton.onClick.AddListener(OnOptionsClicked); }
+        if (mainMenuButton  != null) { mainMenuButton.onClick.RemoveAllListeners();  mainMenuButton.onClick.AddListener(GoToMainMenu); }
+        if (quitButton      != null) { quitButton.onClick.RemoveAllListeners();      quitButton.onClick.AddListener(QuitGame); }
+
+        if (LocalizationManager.Instance != null)
+            LocalizationManager.Instance.OnLanguageChanged += LocalizeUI;
+        LocalizeUI();
+    }
+
+    void OnDestroy()
+    {
+        if (LocalizationManager.Instance != null)
+            LocalizationManager.Instance.OnLanguageChanged -= LocalizeUI;
+    }
+
+    void LocalizeUI()
+    {
+        var lm = LocalizationManager.Instance;
+        if (lm == null) return;
+        SetButtonText(resumeButton,   lm.Translate("Resume"));
+        SetButtonText(optionsButton,  lm.Translate("Options"));
+        SetButtonText(mainMenuButton, lm.Translate("MainMenu"));
+        SetButtonText(quitButton,     lm.Translate("Quit"));
+    }
+
+    static void SetButtonText(Button btn, string text)
+    {
+        if (btn == null) return;
+        var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
+        if (tmp != null) tmp.text = text;
     }
 
     public void Open()
