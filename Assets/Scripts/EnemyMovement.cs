@@ -21,6 +21,19 @@ public class EnemyMovement : NetworkBehaviour
     // Accessible par EnemyController pour bloquer le mouvement
     public bool IsAttacking { get; set; }
 
+    // ── Knockback (serveur uniquement) ─────────────────────────────────
+    private Vector2 knockbackVelocity;
+    private float knockbackDuration;
+    private float knockbackElapsed;
+
+    /// <summary>Applique un knockback à l'ennemi (appelé côté serveur).</summary>
+    public void ApplyKnockback(Vector2 force)
+    {
+        knockbackVelocity = force;
+        knockbackDuration = 0.15f;
+        knockbackElapsed  = 0f;
+    }
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -49,7 +62,16 @@ public class EnemyMovement : NetworkBehaviour
 
     void FixedUpdate()
     {
-        if (!IsServer || IsAttacking) return;
+        if (!IsServer) return;
+
+        if (knockbackElapsed < knockbackDuration)
+        {
+            knockbackElapsed += Time.fixedDeltaTime;
+            rb.MovePosition(rb.position + knockbackVelocity * Time.fixedDeltaTime);
+            return;
+        }
+
+        if (IsAttacking) return;
         rb.MovePosition(rb.position + netMovement.Value * moveSpeed * Time.fixedDeltaTime);
     }
 }

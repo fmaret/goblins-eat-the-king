@@ -32,6 +32,10 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float moveSpeed = 3f;
     [SerializeField] private float sprintMultiplier = 2f;
 
+    [Header("Attaque mêlée")]
+    [Tooltip("AttackDefinition ScriptableObject pour l'attaque mêlée de base (barre espace).\nSi non assignée, l'ancien système flat est utilisé.")]
+    [SerializeField] private AttackDefinition meleeAttackDefinition;
+
     public float MoveSpeed { get => moveSpeed; set => moveSpeed = Mathf.Max(0f, value); }
     public float SprintMultiplier => sprintMultiplier;
 
@@ -770,43 +774,59 @@ public class PlayerController : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        int layerMask = enemyLayer == 0 ? ~0 : (int)enemyLayer;
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attackRange);
+        float range    = meleeAttackDefinition != null ? meleeAttackDefinition.areaRadius : attackRange;
+        float baseDmg  = meleeAttackDefinition != null ? meleeAttackDefinition.damage      : attackDamage;
+        float kbForce  = meleeAttackDefinition != null ? meleeAttackDefinition.knockbackForce : 0f;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, range);
         foreach (var hit in hits)
         {
             Vector2 toTarget = ((Vector2)hit.transform.position - (Vector2)transform.position).normalized;
-            if (Vector2.Dot(dir, toTarget) > 0.3f)
+            if (Vector2.Dot(dir, toTarget) <= 0.3f) continue;
+
+            var enemy = hit.GetComponent<EnemyController>();
+            if (enemy != null)
             {
-                var enemy = hit.GetComponent<EnemyController>();
-                if (enemy != null)
+                bool isCrit = criticalRate > 0f && Random.value < criticalRate;
+                float damageDealt = isCrit ? baseDmg * criticalDamage : baseDmg;
+
+                if (meleeAttackDefinition != null)
                 {
-                    // crit check
-                    bool isCrit = criticalRate > 0f && Random.value < criticalRate;
-                    float damageDealt = isCrit ? attackDamage * criticalDamage : attackDamage;
-                    enemy.ApplyDamage(damageDealt);
-
-                    // apply life/mana/endurance steal to this player
-                    if (lifeSteal > 0f)
-                    {
-                        float heal = damageDealt * lifeSteal;
-                        hp.Value = Mathf.Min(maxHp, hp.Value + heal);
-                        OnHpChanged(hp.Value - heal, hp.Value);
-                    }
-                    if (manaSteal > 0f)
-                    {
-                        float gain = damageDealt * manaSteal;
-                        mp.Value = Mathf.Min(maxMp, mp.Value + gain);
-                    }
-                    if (enduranceSteal > 0f)
-                    {
-                        float egain = damageDealt * enduranceSteal;
-                        endurance.Value = Mathf.Min(maxEndurance, endurance.Value + egain);
-                    }
+                    // Système data-driven : HitData avec knockback + effets
+                    Vector2 kbDir = toTarget;
+                    var hitData = new HitData(damageDealt, transform.position, hit.transform.position)
+                        .WithKnockback(kbDir, kbForce);
+                    if (meleeAttackDefinition.effects != null)
+                        foreach (var fx in meleeAttackDefinition.effects)
+                            hitData = hitData.WithEffect(fx);
+                    enemy.ApplyHit(hitData);
                 }
-                var pot = hit.GetComponentInParent<PotController>();
-                if (pot != null) pot.TakeDamage();
+                else
+                {
+                    enemy.ApplyDamage(damageDealt);
+                }
 
+                // Steal (inchangé)
+                if (lifeSteal > 0f)
+                {
+                    float heal = damageDealt * lifeSteal;
+                    hp.Value = Mathf.Min(maxHp, hp.Value + heal);
+                    OnHpChanged(hp.Value - heal, hp.Value);
+                }
+                if (manaSteal > 0f)
+                {
+                    float gain = damageDealt * manaSteal;
+                    mp.Value = Mathf.Min(maxMp, mp.Value + gain);
+                }
+                if (enduranceSteal > 0f)
+                {
+                    float egain = damageDealt * enduranceSteal;
+                    endurance.Value = Mathf.Min(maxEndurance, endurance.Value + egain);
+                }
             }
+
+            var pot = hit.GetComponentInParent<PotController>();
+            if (pot != null) pot.TakeDamage();
         }
     }
 

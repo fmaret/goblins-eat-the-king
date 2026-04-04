@@ -187,6 +187,7 @@ MonoBehaviour:
   maxEndurance: 100
   moveSpeed: 3
   sprintMultiplier: 2
+  meleeAttackDefinition: {fileID: 11400000, guid: edd333c794bfc498e9144a08ac24d08c, type: 2}
 --- !u!114 &3222807183391753532
 MonoBehaviour:
   m_ObjectHideFlags: 0

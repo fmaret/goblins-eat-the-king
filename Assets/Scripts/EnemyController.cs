@@ -292,6 +292,26 @@ public class EnemyController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Applique un hit complet (dégâts + knockback + effets) à cet ennemi.
+    /// À appeler côté serveur uniquement.
+    /// </summary>
+    public void ApplyHit(Goblins.Combat.HitData hitData)
+    {
+        if (!IsServer || netIsDead.Value) return;
+
+        ApplyDamage(hitData.damage);
+
+        // Knockback
+        if (hitData.knockbackForce > 0f && enemyMovement != null)
+        {
+            Vector2 dir = hitData.knockbackDirection.normalized;
+            if (dir == Vector2.zero)
+                dir = ((Vector2)transform.position - hitData.sourcePosition).normalized;
+            enemyMovement.ApplyKnockback(dir * hitData.knockbackForce);
+        }
+    }
+
     // 60% → 0, 30% → 1, 10% → 2
     private static int WeightedCoinDrop()
     {
