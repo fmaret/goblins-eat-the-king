@@ -97,6 +97,8 @@ public class EscapeMenuManager : MonoBehaviour
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
             NetworkManager.Singleton.Shutdown();
+        if (CoinManager.Instance != null)
+            CoinManager.Instance.gameObject.SetActive(false);
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
