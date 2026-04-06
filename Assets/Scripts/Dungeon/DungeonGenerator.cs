@@ -346,7 +346,7 @@ public class DungeonGenerator : NetworkBehaviour
             yield return new WaitForSeconds(enemySpawnInterval);
 
             Vector3 origin = spawnPoints[Random.Range(0, spawnPoints.Count)];
-            Vector2 offset = Random.insideUnitCircle * 0.6f;
+            Vector2 offset = Random.insideUnitCircle * 0.3f;
             Vector3 pos    = origin + new Vector3(offset.x, offset.y, 0f);
 
             var go = Instantiate(enemyPrefab, pos, Quaternion.identity);

@@ -56,6 +56,12 @@ public class EnemyController : NetworkBehaviour
     private float seed;
     private float speedMultiplier = 1f;
 
+    // Wander / patrouille (quand aucun joueur détecté)
+    private Vector2 wanderTarget;
+    private bool hasWanderTarget = false;
+    private float wanderTimer = 0f;
+    private float wanderPauseTimer = 0f;
+
     void Awake()
     {
         enemyMovement = GetComponent<EnemyMovement>();
@@ -163,7 +169,7 @@ public class EnemyController : NetworkBehaviour
 
     private void UpdateState()
     {
-        if (target == null) { enemyMovement.netMovement.Value = Vector2.zero; return; }
+        if (target == null) { Wander(); return; }
 
         float dist = Vector2.Distance(transform.position, target.position);
         Vector2 toTarget = ((Vector2)target.position - (Vector2)transform.position).normalized;
@@ -173,9 +179,13 @@ public class EnemyController : NetworkBehaviour
         float effectiveDetectionRange = Mathf.Max(detectionRange, GetMaxTriggerRange());
         if (dist > effectiveDetectionRange)
         {
-            enemyMovement.netMovement.Value = Vector2.zero;
+            Wander();
             return;
         }
+
+        // Joueur détecté : réinitialise l'état de rôde pour une reprise propre
+        hasWanderTarget = false;
+        wanderPauseTimer = 0f;
 
         // Essaye de lancer une attaque
         if (attackBrain != null && currentAttack == null)
@@ -208,6 +218,49 @@ public class EnemyController : NetworkBehaviour
         float jitter = Mathf.Sin(Time.time * 2f + seed) * blockIntensity;
         Vector2 dir = (toTarget + perp * jitter).normalized;
         enemyMovement.netMovement.Value = dir * speedMultiplier;
+    }
+
+    private void Wander()
+    {
+        // Pause entre deux déplacements
+        if (wanderPauseTimer > 0f)
+        {
+            wanderPauseTimer -= Time.deltaTime;
+            enemyMovement.netMovement.Value = Vector2.zero;
+            return;
+        }
+
+        float roomSz = DungeonGenerator.Instance != null ? DungeonGenerator.Instance.RoomSize : 10f;
+
+        // Choisir une nouvelle cible de rôde si besoin (arrivée, timeout ou départ)
+        bool arrived = hasWanderTarget && Vector2.Distance(transform.position, wanderTarget) < 0.35f;
+        bool timedOut = wanderTimer > 6f;
+
+        if (!hasWanderTarget || arrived || timedOut)
+        {
+            if (arrived)
+            {
+                // Petite pause à l'arrivée (0.5 – 2 s)
+                wanderPauseTimer = Random.Range(0.5f, 2f);
+                enemyMovement.netMovement.Value = Vector2.zero;
+            }
+
+            float cx = roomX >= 0 ? roomX * roomSz : transform.position.x;
+            float cy = roomY >= 0 ? -roomY * roomSz : transform.position.y;
+            float radius = roomSz * 0.30f;
+
+            wanderTarget = new Vector2(
+                cx + Random.Range(-radius, radius),
+                cy + Random.Range(-radius, radius));
+            hasWanderTarget = true;
+            wanderTimer = 0f;
+            return;
+        }
+
+        wanderTimer += Time.deltaTime;
+        Vector2 toWander = ((Vector2)wanderTarget - (Vector2)transform.position).normalized;
+        // Déplacement plus lent que la chasse
+        enemyMovement.netMovement.Value = toWander * 0.4f;
     }
 
     private IEnumerator WaitForAttackCompletion()
