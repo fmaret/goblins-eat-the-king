@@ -165,7 +165,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   ShowTopMostFoldoutHeaderGroup: 1
-  attackDamage: 10
+  attackDamage: 1010
   magicAttackDamage: 15
   defense: 5
   magicDefense: 3
@@ -182,7 +182,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
-  maxHp: 100
+  maxHp: 18000
   maxMp: 50
   maxEndurance: 100
   moveSpeed: 3

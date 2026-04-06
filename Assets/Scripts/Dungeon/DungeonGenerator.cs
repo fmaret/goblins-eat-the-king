@@ -99,6 +99,7 @@ public class DungeonGenerator : NetworkBehaviour
 
     private void GenerateDungeon(int seed)
     {
+        RoomBuilder.ResetUseCounts();
         var rng = new System.Random(seed);
 
         grid = new RoomInfo[gridWidth, gridHeight + 1];

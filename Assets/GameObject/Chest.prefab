@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.16666666, y: 0.16666666, z: 0.33333334}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -108,7 +108,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChestController
   openSprite: {fileID: -859513755973794298, guid: f3e4f5778990e304aafb974514aec9d1, type: 3}
   coinPrefab: {fileID: 4493141593008526777, guid: bbb627dacec28214fad2705adb1db35b, type: 3}
-  coinCount: 5
+  minCoins: 3
+  maxCoins: 8
 --- !u!61 &5025583603900312009
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -147,7 +148,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.34, y: 0.33}
+    oldSize: {x: 3.2, y: 3.1}
     newSize: {x: 0.34, y: 0.33}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -193,7 +194,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.34, y: 0.33}
+    oldSize: {x: 3.2, y: 3.1}
     newSize: {x: 0.34, y: 0.33}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
