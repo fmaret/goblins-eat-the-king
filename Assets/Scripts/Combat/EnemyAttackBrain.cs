@@ -13,6 +13,10 @@ public class EnemyAttackBrain : MonoBehaviour
     [SerializeField] private List<AttackDefinition> availableAttacks = new List<AttackDefinition>();
     [SerializeField] private bool debugLog = false;
 
+    // Multiplicateur appliqué au damage de chaque AttackDefinition (alimenté par les stats de l'ennemi)
+    public float DamageMultiplier { get; private set; } = 1f;
+    public void SetDamageMultiplier(float mult) { DamageMultiplier = mult; }
+
     private Dictionary<AttackDefinition, float> lastAttackTimes = new Dictionary<AttackDefinition, float>();
     private Animator animator;
     private EnemyMovement enemyMovement;
@@ -320,7 +324,7 @@ public class EnemyAttackBrain : MonoBehaviour
             {
                 // Valeurs initiales définies AVANT Spawn : incluses dans le message de spawn initial
                 netProj.SetInitialValues(shootDir, def.projectileSpeed, def.projectileLifetime,
-                                         def.damage, def.knockbackForce, def.effects);
+                                         def.damage * brain.DamageMultiplier, def.knockbackForce, def.effects);
                 no.Spawn(destroyWithScene: true);
             }
             else
@@ -349,7 +353,7 @@ public class EnemyAttackBrain : MonoBehaviour
 
         private void ApplyHitToPlayer(PlayerController player, Vector2 sourcePos, Vector2 hitPos, Vector2 knockbackDir, float knockbackForce)
         {
-            HitData hitData = new HitData(def.damage, sourcePos, hitPos)
+            HitData hitData = new HitData(def.damage * brain.DamageMultiplier, sourcePos, hitPos)
                 .WithKnockback(knockbackDir, knockbackForce);
 
             if (def.effects != null && def.effects.Count > 0)

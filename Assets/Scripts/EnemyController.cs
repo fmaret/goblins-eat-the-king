@@ -46,6 +46,7 @@ public class EnemyController : NetworkBehaviour
         moveSpeed     *= speedMult;
         if (enemyMovement != null) enemyMovement.moveSpeed = moveSpeed;
         transform.localScale = Vector3.one * scaleMult;
+        if (attackBrain != null) attackBrain.SetDamageMultiplier(damageMult);
     }
 
     private EnemyMovement enemyMovement;

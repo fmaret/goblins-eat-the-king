@@ -774,8 +774,11 @@ public class PlayerController : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        float range    = meleeAttackDefinition != null ? meleeAttackDefinition.areaRadius : attackRange;
-        float baseDmg  = meleeAttackDefinition != null ? meleeAttackDefinition.damage      : attackDamage;
+        // Quand une définition est assignée, les stats du joueur la scalent :
+        //   attackDamage (base 25) → multiplie le damage de la définition
+        //   attackRange  (base 0.8) → multiplie l'areaRadius de la définition
+        float range    = meleeAttackDefinition != null ? meleeAttackDefinition.attackRange * (attackRange / 0.8f) : attackRange;
+        float baseDmg  = meleeAttackDefinition != null ? meleeAttackDefinition.damage * (attackDamage / 25f)     : attackDamage;
         float kbForce  = meleeAttackDefinition != null ? meleeAttackDefinition.knockbackForce : 0f;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, range);
